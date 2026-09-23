@@ -1,0 +1,45 @@
+{{- if .Values.web.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "test-connection") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    # curlimages/curl declares USER curl_user; kubelet needs the numeric uid to verify non-root.
+    runAsUser: 100
+    runAsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: curl
+      image: curlimages/curl:8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        readOnlyRootFilesystem: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
+      command: ["curl"]
+      args:
+        - --silent
+        - --show-error
+        - --fail
+        - --max-time
+        - "10"
+        - {{ printf "http://%s:%v%s" (include "admin-panel.componentName" (list . "web")) .Values.web.service.port (.Values.probes.appPath | default .Values.probes.path) | quote }}
+{{- end }}

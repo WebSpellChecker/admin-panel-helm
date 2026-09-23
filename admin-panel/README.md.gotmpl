@@ -1,0 +1,51 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+> Documentation and examples: [`docs/`](../docs/)
+
+## How to install
+
+Follow [`docs/QUICKSTART.md`](../docs/QUICKSTART.md) for dependency
+checks, Secret creation, installation, and application-level verification. The smallest
+values file looks like this:
+
+```yaml
+# values.yaml (minimal, external MySQL)
+config:
+  appUrl: http://127.0.0.1:8080
+  appServerUrl: https://wproofreader.example.com/wscservice/api
+  db: { host: mysql.example.com, database: admin_panel_db, username: admin_panel }
+  serviceDb: { host: wproofreader-mysql.example.com, port: 3306, database: cloud_service, username: app_service }
+  mail: { mailer: log }
+secrets:
+  existingSecret: admin-panel-secrets
+```
+
+```bash
+helm upgrade --install admin-panel ./admin-panel -n admin-panel -f values.yaml --atomic --timeout 10m
+```
+
+More scenarios (Gateway API + TLS, Ingress, S3/RWX storage): [`docs/examples/`](../docs/examples).
+
+## Architecture
+
+One image, three roles (web = nginx+php-fpm, worker = `queue:work`, scheduler = `schedule:work`)
+plus a one-shot migration hook Job. See the [documentation](../docs/README.md) for details.
+
+{{ template "chart.requirementsSection" . }}
+
+## Values
+
+The **Required** column flags which values you must set.
+
+| Key | Type | Required | Default | Description |
+|-----|------|----------|---------|-------------|
+{{- range .Values }}
+| {{ .Key }} | {{ .Type | trimSuffix ", required" }} | {{ if hasSuffix "required" .Type }}**Yes**{{ else }}No{{ end }} | {{ if .Default }}{{ .Default }}{{ else }}{{ .AutoDefault }}{{ end }} | {{ if .Description }}{{ .Description }}{{ else }}{{ .AutoDescription }}{{ end }} |
+{{- end }}
+
+{{ template "helm-docs.versionFooter" . }}

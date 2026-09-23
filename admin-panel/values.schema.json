@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Admin-panel Helm values",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "envMap": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
+    },
+    "roleEnvMap": {
+      "type": "object",
+      "propertyNames": {
+        "allOf": [
+          { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          { "not": { "enum": ["APP_EDITION"] } }
+        ]
+      },
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
+    },
+    "backgroundRoleEnvMap": {
+      "type": "object",
+      "propertyNames": {
+        "allOf": [
+          { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+          { "not": { "enum": ["APP_EDITION", "SKIP_ENTRYPOINT_CONFIG"] } }
+        ]
+      },
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
+    },
+    "resources": { "type": "object" },
+    "affinity": { "type": "object" },
+    "tolerations": { "type": "array", "items": { "type": "object" } },
+    "probeTiming": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "initialDelaySeconds": { "type": "integer", "minimum": 0 },
+        "periodSeconds": { "type": "integer", "minimum": 1 },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "failureThreshold": { "type": "integer", "minimum": 1 },
+        "successThreshold": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "properties": {
+    "global": { "type": "object" },
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "registry": { "type": "string" },
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "digest": { "type": "string", "pattern": "^(|sha256:[a-f0-9]{64})$" },
+        "pullPolicy": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] }
+      },
+      "required": ["repository"]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": { "name": { "type": "string", "minLength": 1 } },
+        "required": ["name"]
+      }
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "appName": { "type": "string", "minLength": 1 },
+        "appEnv": { "type": "string", "minLength": 1 },
+        "appUrl": { "type": "string", "pattern": "^https?://" },
+        "appServerUrl": { "type": "string", "pattern": "^https?://" },
+        "appServerInternalUrl": { "type": "string", "pattern": "^(https?://.+)?$" },
+        "logOutputLevel": { "type": "string", "enum": ["debug", "info", "warn", "error"] },
+        "sslMode": { "type": "string", "enum": ["off", "mixed", "full"] },
+        "proxyType": { "type": "string", "minLength": 1 },
+        "sessionDriver": { "type": "string", "enum": ["file", "cookie", "database", "array"] },
+        "cacheStore": { "type": "string", "minLength": 1 },
+        "queueConnection": { "type": "string", "enum": ["sync", "database"] },
+        "filesystemDisk": { "type": "string", "minLength": 1 },
+        "profilePhotoDisk": { "type": "string", "minLength": 1 },
+        "db": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": { "type": "string", "minLength": 1 },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "database": { "type": "string", "minLength": 1 },
+            "username": { "type": "string", "minLength": 1 }
+          },
+          "required": ["host", "port", "database", "username"]
+        },
+        "serviceDb": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "database": { "type": "string", "minLength": 1 },
+            "username": { "type": "string" }
+          }
+        },
+        "mail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mailer": { "type": "string", "minLength": 1 },
+            "host": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "encryption": { "type": "string" },
+            "fromAddress": { "type": "string", "minLength": 1 },
+            "fromName": { "type": "string", "minLength": 1 }
+          }
+        },
+        "objectStorage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "region": { "type": "string" },
+            "bucket": { "type": "string" },
+            "endpoint": { "type": "string", "pattern": "^(https?://.+)?$" },
+            "usePathStyleEndpoint": { "type": "boolean" }
+          }
+        },
+        "extraEnv": { "$ref": "#/definitions/envMap" }
+      },
+      "required": ["appUrl", "appServerUrl", "db"]
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "existingSecret": { "type": "string" },
+        "appKey": { "type": "string" },
+        "db": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "password": { "type": "string" } }
+        },
+        "serviceDb": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "password": { "type": "string" } }
+        },
+        "mail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" }
+          }
+        },
+        "s3": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "accessKeyId": { "type": "string" },
+            "secretAccessKey": { "type": "string" }
+          }
+        },
+        "extraSecretEnv": { "$ref": "#/definitions/envMap" }
+      }
+    },
+    "persistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "existingClaim": { "type": "string" },
+        "storageClass": { "type": "string" },
+        "accessModes": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "size": { "type": "string", "minLength": 1 },
+        "mountPath": { "type": "string", "pattern": "^/" },
+        "annotations": { "$ref": "#/definitions/stringMap" }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" },
+        "automountServiceAccountToken": { "type": "boolean" },
+        "annotations": { "$ref": "#/definitions/stringMap" }
+      }
+    },
+    "podAnnotations": { "$ref": "#/definitions/stringMap" },
+    "podLabels": { "$ref": "#/definitions/stringMap" },
+    "podSecurityContext": { "type": "object" },
+    "securityContext": { "type": "object" },
+    "probes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "pattern": "^/" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "appPath": { "type": "string", "pattern": "^/" }
+      }
+    },
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "extraEnv": { "$ref": "#/definitions/roleEnvMap" },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"] },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        },
+        "resources": { "$ref": "#/definitions/resources" },
+        "autoscaling": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "minReplicas": { "type": "integer", "minimum": 1 },
+            "maxReplicas": { "type": "integer", "minimum": 1 },
+            "targetCPUUtilizationPercentage": { "type": "integer", "minimum": 1, "maximum": 100 },
+            "targetMemoryUtilizationPercentage": { "type": "integer", "minimum": 1, "maximum": 100 }
+          }
+        },
+        "podDisruptionBudget": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "minAvailable": { "type": ["integer", "string"] },
+            "maxUnavailable": { "type": ["integer", "string"] }
+          }
+        },
+        "strategy": { "type": "object" },
+        "livenessProbe": { "$ref": "#/definitions/probeTiming" },
+        "readinessProbe": { "$ref": "#/definitions/probeTiming" },
+        "startupProbe": { "$ref": "#/definitions/probeTiming" },
+        "nodeSelector": { "$ref": "#/definitions/stringMap" },
+        "tolerations": { "$ref": "#/definitions/tolerations" },
+        "affinity": { "$ref": "#/definitions/affinity" }
+      }
+    },
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "args": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "extraEnv": { "$ref": "#/definitions/backgroundRoleEnvMap" },
+        "resources": { "$ref": "#/definitions/resources" },
+        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+        "livenessProbe": { "$ref": "#/definitions/probeTiming" },
+        "nodeSelector": { "$ref": "#/definitions/stringMap" },
+        "tolerations": { "$ref": "#/definitions/tolerations" },
+        "affinity": { "$ref": "#/definitions/affinity" }
+      }
+    },
+    "scheduler": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "args": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+        "extraEnv": { "$ref": "#/definitions/backgroundRoleEnvMap" },
+        "resources": { "$ref": "#/definitions/resources" },
+        "livenessProbe": { "$ref": "#/definitions/probeTiming" },
+        "nodeSelector": { "$ref": "#/definitions/stringMap" },
+        "tolerations": { "$ref": "#/definitions/tolerations" },
+        "affinity": { "$ref": "#/definitions/affinity" }
+      }
+    },
+    "migrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "runSeed": { "type": "boolean" },
+        "backoffLimit": { "type": "integer", "minimum": 0 },
+        "waitDbTimeout": { "type": "integer", "minimum": 1 },
+        "hooks": { "type": "string", "minLength": 1 },
+        "resources": { "$ref": "#/definitions/resources" },
+        "nodeSelector": { "$ref": "#/definitions/stringMap" },
+        "tolerations": { "$ref": "#/definitions/tolerations" },
+        "affinity": { "$ref": "#/definitions/affinity" }
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "create": { "type": "boolean" },
+        "gatewayClassName": { "type": "string" },
+        "listenerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "listenerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "secretName": { "type": "string" },
+            "httpsRedirect": { "type": "boolean" },
+            "certManager": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "issuerRef": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": { "type": "string" },
+                    "kind": { "type": "string", "enum": ["Issuer", "ClusterIssuer"] }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parentRefs": { "type": "array", "items": { "type": "object" } },
+        "hostnames": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "annotations": { "$ref": "#/definitions/stringMap" },
+        "wproofreader": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "serviceName": { "type": "string", "minLength": 1 },
+            "servicePort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "namespace": { "type": "string" },
+            "paths": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^/" } }
+          }
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
+        "annotations": { "$ref": "#/definitions/stringMap" },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "host": { "type": "string", "minLength": 1 },
+              "paths": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": { "type": "string", "pattern": "^/" },
+                    "pathType": { "type": "string", "enum": ["Exact", "Prefix", "ImplementationSpecific"] }
+                  },
+                  "required": ["path"]
+                }
+              }
+            },
+            "required": ["host", "paths"]
+          }
+        },
+        "tls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "secretName": { "type": "string", "minLength": 1 },
+              "hosts": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+            }
+          }
+        },
+        "wproofreader": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "serviceName": { "type": "string", "minLength": 1 },
+            "servicePort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "pathType": { "type": "string", "enum": ["Exact", "Prefix", "ImplementationSpecific"] },
+            "paths": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^/" } }
+          }
+        }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "ingressFrom": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}

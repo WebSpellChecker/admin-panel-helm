@@ -1,0 +1,42 @@
+# Admin-panel via classic Ingress with cert-manager TLS (compatibility option for
+# clusters not on Gateway API), co-hosting the WProofreader AppServer on the same host.
+# Traefik shown. HTTP->HTTPS redirect is configured on the Traefik entrypoint, not here;
+# see docs/ROUTING.md section C. Ingress cannot route to another namespace, so
+# WProofreader must run in the same namespace as Admin-panel.
+config:
+  appUrl: https://admin-panel.example.com
+  appServerUrl: https://admin-panel.example.com/wscservice/api
+
+  db:
+    host: mysql.example.com
+    port: 3306
+    database: admin_panel_db
+    username: admin_panel
+  serviceDb:
+    host: wproofreader-mysql.example.com
+    port: 3306
+    database: cloud_service
+    username: app_service
+  mail:
+    mailer: log                         # replace with SMTP settings before production
+
+secrets:
+  existingSecret: admin-panel-secrets
+
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: admin-panel.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: admin-panel-tls
+      hosts: ["admin-panel.example.com"]
+  wproofreader:
+    enabled: true
+    serviceName: wproofreader-app
+    servicePort: 80

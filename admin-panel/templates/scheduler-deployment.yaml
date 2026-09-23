@@ -1,0 +1,69 @@
+{{- if .Values.scheduler.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "scheduler") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler
+spec:
+  # Keep one replica. Additional schedulers would run every task more than once.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "admin-panel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        {{- include "admin-panel.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: scheduler
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- include "admin-panel.podAnnotations" . | nindent 8 }}
+    spec:
+      {{- include "admin-panel.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      serviceAccountName: {{ include "admin-panel.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.scheduler.terminationGracePeriodSeconds }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: scheduler
+          image: {{ include "admin-panel.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: {{ toYaml .Values.scheduler.args | nindent 12 }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            {{- include "admin-panel.envFrom" . | nindent 12 }}
+          env:
+            # No web server here: skip the entrypoint configuration scripts.
+            - name: SKIP_ENTRYPOINT_CONFIG
+              value: "true"
+            {{- range $k, $v := .Values.scheduler.extraEnv }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "artisan schedule:work"]
+            {{- toYaml .Values.scheduler.livenessProbe | nindent 12 }}
+          {{- with .Values.scheduler.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- include "admin-panel.volumeMounts" . | nindent 10 }}
+      {{- include "admin-panel.volumes" . | nindent 6 }}
+      {{- with (include "admin-panel.scheduling" .Values.scheduler) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+{{- end }}

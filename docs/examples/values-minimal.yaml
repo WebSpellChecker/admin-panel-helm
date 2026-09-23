@@ -1,0 +1,27 @@
+# Minimal Admin-panel install with external MySQL and no routing.
+# Copy this to values.local.yaml, replace the example endpoints, and follow
+# docs/QUICKSTART.md. Passwords stay in the admin-panel-secrets Kubernetes Secret.
+config:
+  appUrl: http://127.0.0.1:8080                    # matches the quick-start port-forward
+  appServerUrl: https://wproofreader.example.com/wscservice/api
+  appServerInternalUrl: http://wproofreader-app.wproofreader.svc.cluster.local/wscservice/api
+
+  db:
+    host: mysql.example.com
+    port: 3306
+    database: admin_panel_db
+    username: admin_panel
+
+  # WProofreader's database (owned by WProofreader; admin-panel only connects).
+  serviceDb:
+    host: wproofreader-mysql.example.com
+    port: 3306
+    database: cloud_service
+    username: app_service
+
+  # Avoid SMTP failures until outbound mail is intentionally configured.
+  mail:
+    mailer: log
+
+secrets:
+  existingSecret: admin-panel-secrets

@@ -1,0 +1,93 @@
+{{- if and .Values.gateway.enabled .Values.ingress.enabled }}
+{{- fail "Enable only one of gateway.enabled or ingress.enabled, not both." }}
+{{- end }}
+{{- if .Values.gateway.enabled }}
+{{- if not .Values.web.enabled }}
+{{- fail "gateway.enabled requires web.enabled because the HTTPRoute points to the web Service." }}
+{{- end }}
+{{- if and (not .Values.gateway.parentRefs) (not .Values.gateway.create) }}
+{{- fail "gateway.parentRefs is required when gateway.enabled and not gateway.create (reference an existing Gateway)." }}
+{{- end }}
+{{- $fullName := include "admin-panel.fullname" . -}}
+{{- $webName := include "admin-panel.componentName" (list . "web") -}}
+{{- $redirectName := include "admin-panel.componentName" (list . "https-redirect") -}}
+{{- $svcPort := .Values.web.service.port -}}
+{{- $wpr := .Values.gateway.wproofreader -}}
+{{- /* HTTP->HTTPS redirect only when the chart owns the listeners (create) and TLS is on */ -}}
+{{- $redirect := and .Values.gateway.create .Values.gateway.tls.enabled .Values.gateway.tls.httpsRedirect -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+  {{- with .Values.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- if $redirect }}
+    {{- /* serve the app only on the HTTPS listeners; HTTP gets the redirect route below */}}
+    {{- range $i, $h := .Values.gateway.hostnames }}
+    - name: {{ $fullName }}
+      sectionName: https-{{ $i }}
+    {{- end }}
+    {{- else if .Values.gateway.create }}
+    - name: {{ $fullName }}
+    {{- else }}
+    {{- toYaml .Values.gateway.parentRefs | nindent 4 }}
+    {{- end }}
+  {{- with .Values.gateway.hostnames }}
+  hostnames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if $wpr.enabled }}
+    {{- range $wpr.paths }}
+    # WProofreader AppServer (co-hosted, same-origin)
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ . }}
+      backendRefs:
+        - name: {{ $wpr.serviceName }}
+          {{- with $wpr.namespace }}
+          namespace: {{ . }}
+          {{- end }}
+          port: {{ $wpr.servicePort }}
+    {{- end }}
+    {{- end }}
+    # Admin-panel catch-all
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ $webName }}
+          port: {{ $svcPort }}
+{{- if $redirect }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $redirectName }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $fullName }}
+      sectionName: http
+  {{- with .Values.gateway.hostnames }}
+  hostnames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    # Redirect all plaintext HTTP to HTTPS.
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+{{- end }}
+{{- end }}

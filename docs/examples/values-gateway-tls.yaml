@@ -1,0 +1,46 @@
+# Admin-panel via Gateway API with cert-manager TLS, co-hosting the WProofreader
+# AppServer under the same host (so the in-UI widget calls it same-origin).
+#
+# Traefik shown (class `traefik`, entrypoint ports 8000/8443). For Envoy Gateway:
+#   gatewayClassName: eg, listenerPort: 80, tls.listenerPort: 443
+# Controller installation and verification: docs/ROUTING.md.
+# If WProofreader runs in another namespace, add `namespace: <ns>` under wproofreader.
+config:
+  appUrl: https://admin-panel.example.com
+  appServerUrl: https://admin-panel.example.com/wscservice/api   # same-origin via co-routing
+
+  db:
+    host: mysql.example.com
+    port: 3306
+    database: admin_panel_db
+    username: admin_panel
+  serviceDb:
+    host: wproofreader-mysql.example.com
+    port: 3306
+    database: cloud_service
+    username: app_service
+  mail:
+    mailer: log                         # replace with SMTP settings before production
+
+secrets:
+  existingSecret: admin-panel-secrets        # APP_KEY, DB passwords, OAuth, mail
+
+gateway:
+  enabled: true
+  create: true
+  gatewayClassName: traefik
+  listenerPort: 8000
+  hostnames: ["admin-panel.example.com"]
+  tls:
+    enabled: true
+    listenerPort: 8443
+    secretName: admin-panel-gw-tls
+    certManager:                             # chart issues the cert; no standalone Certificate
+      enabled: true
+      issuerRef:
+        name: letsencrypt-prod
+        kind: ClusterIssuer
+  wproofreader:
+    enabled: true
+    serviceName: wproofreader-app
+    servicePort: 80

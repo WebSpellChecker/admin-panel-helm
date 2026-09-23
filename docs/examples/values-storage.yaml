@@ -1,0 +1,22 @@
+# Durable storage for avatars and uploads. Choose one option.
+# (Without either, uploads are pod-local: lost on restart and not shared across replicas.)
+
+# Option A: S3-compatible object storage (MinIO, Ceph RGW, or AWS S3)
+# Stateless pods; the recommended path for multi-replica / autoscaled web.
+config:
+  profilePhotoDisk: s3
+  filesystemDisk: s3
+  objectStorage:
+    endpoint: http://minio.minio.svc:9000   # leave empty for AWS S3
+    bucket: admin-panel
+    usePathStyleEndpoint: true              # true for MinIO/Ceph, false for AWS
+# With secrets.existingSecret, add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to that
+# Secret. Omit both on AWS when workload identity/IRSA supplies credentials.
+
+# Option B: shared ReadWriteMany volume (NFS, CephFS, Longhorn, or EFS)
+# No object store; needs an RWX-capable StorageClass. Uncomment to use instead of A.
+# persistence:
+#   enabled: true
+#   storageClass: nfs-client
+#   accessModes: ["ReadWriteMany"]
+#   size: 5Gi

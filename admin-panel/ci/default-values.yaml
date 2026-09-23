@@ -1,0 +1,32 @@
+# ci/default-values.yaml
+# Minimal values used by chart-testing for linting and rendering.
+# External services are not started, so this file is not an end-to-end install fixture.
+#
+# These values are placeholders for linting and rendering only. For a real install,
+# inject an application key with:
+#   --set secrets.appKey="$(php artisan key:generate --show)"
+config:
+  appUrl: "http://admin-panel.example.com"
+  appServerUrl: "http://wproofreader.test/wscservice/api"
+  appEnv: local
+  db:
+    host: "mysql-primary.wsc.svc.cluster.local"
+    database: admin_panel
+    username: admin_panel
+
+secrets:
+  appKey: "ci-placeholder-not-a-real-key"
+  db:
+    password: "ci-placeholder-db-pass"
+  serviceDb:
+    password: "ci-placeholder-service-db-pass"
+
+web:
+  enabled: true
+  replicaCount: 1
+worker:
+  enabled: true
+scheduler:
+  enabled: true
+migrations:
+  enabled: true

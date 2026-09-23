@@ -1,0 +1,24 @@
+{{- /*
+ReferenceGrant that lets this release's HTTPRoute reference the WProofreader Service
+when it lives in another namespace (Gateway API requires the grant to exist in the
+namespace of the referenced Service). Rendered only for a foreign namespace.
+*/ -}}
+{{- $wpr := .Values.gateway.wproofreader -}}
+{{- if and .Values.gateway.enabled $wpr.enabled $wpr.namespace (ne $wpr.namespace .Release.Namespace) }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "wproofreader") }}
+  namespace: {{ $wpr.namespace }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: {{ .Release.Namespace }}
+  to:
+    - group: ""
+      kind: Service
+      name: {{ $wpr.serviceName }}
+{{- end }}

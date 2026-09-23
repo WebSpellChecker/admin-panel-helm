@@ -1,0 +1,51 @@
+# Mailpit development SMTP catcher and web UI.
+# Apply:  kubectl apply -n admin-panel -f docs/examples/mailpit-dev.yaml
+# View caught mail:  kubectl -n admin-panel port-forward svc/mailpit 8025:8025
+# Then open: http://localhost:8025
+# Point the app at it:  MAIL_HOST=mailpit  MAIL_PORT=1025  MAIL_ENCRYPTION=""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  labels:
+    app.kubernetes.io/name: mailpit
+    app.kubernetes.io/component: dev-smtp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mailpit
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mailpit
+        app.kubernetes.io/component: dev-smtp
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:latest
+          ports:
+            - { name: smtp, containerPort: 1025 }
+            - { name: http, containerPort: 8025 }
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 25m, memory: 32Mi }
+            limits: { cpu: 100m, memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailpit
+  labels:
+    app.kubernetes.io/name: mailpit
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mailpit
+  ports:
+    - { name: smtp, port: 1025, targetPort: smtp }
+    - { name: http, port: 8025, targetPort: http }

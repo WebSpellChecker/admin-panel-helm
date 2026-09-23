@@ -1,0 +1,87 @@
+{{- if .Values.web.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "web") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  {{- if not .Values.web.autoscaling.enabled }}
+  replicas: {{ .Values.web.replicaCount }}
+  {{- end }}
+  {{- with .Values.web.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "admin-panel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        {{- include "admin-panel.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: web
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- include "admin-panel.podAnnotations" . | nindent 8 }}
+    spec:
+      {{- include "admin-panel.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      serviceAccountName: {{ include "admin-panel.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: web
+          image: {{ include "admin-panel.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.web.args }}
+          args: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.probes.port }}
+              protocol: TCP
+          envFrom:
+            {{- include "admin-panel.envFrom" . | nindent 12 }}
+          {{- with .Values.web.extraEnv }}
+          env:
+            {{- range $k, $v := . }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          {{- end }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: {{ .Values.probes.port }}
+            {{- toYaml .Values.web.startupProbe | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: {{ .Values.probes.port }}
+            {{- toYaml .Values.web.livenessProbe | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.appPath | default .Values.probes.path }}
+              port: {{ .Values.probes.port }}
+            {{- toYaml .Values.web.readinessProbe | nindent 12 }}
+          {{- with .Values.web.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- include "admin-panel.volumeMounts" . | nindent 10 }}
+      {{- include "admin-panel.volumes" . | nindent 6 }}
+      {{- with (include "admin-panel.scheduling" .Values.web) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+{{- end }}

@@ -1,0 +1,38 @@
+{{- if and .Values.gateway.enabled .Values.gateway.create }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "admin-panel.fullname" . }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+spec:
+  gatewayClassName: {{ required "gateway.gatewayClassName is required when gateway.create=true" .Values.gateway.gatewayClassName }}
+  listeners:
+    - name: http
+      protocol: HTTP
+      # Listener port must match the controller's entryPoint. Envoy Gateway: 80.
+      # Traefik binds listeners to an entryPoint by port. Its `web` entryPoint is 8000.
+      port: {{ .Values.gateway.listenerPort | default 80 }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- if .Values.gateway.tls.enabled }}
+    {{- $top := . }}
+    {{- $secretName := required "gateway.tls.secretName is required when gateway.tls.enabled" .Values.gateway.tls.secretName }}
+    {{- range $i, $host := .Values.gateway.hostnames }}
+    # One HTTPS listener per hostname (SNI); all share the SAN cert in secretName.
+    - name: https-{{ $i }}
+      protocol: HTTPS
+      # TLS listener port; match the controller's TLS entryPoint. Envoy: 443. Traefik `websecure`: 8443.
+      port: {{ $top.Values.gateway.tls.listenerPort | default 443 }}
+      hostname: {{ $host | quote }}
+      allowedRoutes:
+        namespaces:
+          from: Same
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ $secretName }}
+    {{- end }}
+    {{- end }}
+{{- end }}

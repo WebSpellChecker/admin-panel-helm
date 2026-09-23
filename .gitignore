@@ -1,0 +1,15 @@
+.DS_Store
+*.tgz
+**/charts/*.tgz
+**/Chart.lock
+.idea/
+.vscode/
+*.swp
+*.bak
+admin-panel/env-local.yaml
+admin-panel/values-dev.yaml
+values.local.yaml
+
+# Local working artifacts. These are not part of the chart release.
+k8s-deployment-plan.md
+code-review.md

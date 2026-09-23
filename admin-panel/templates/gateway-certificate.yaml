@@ -1,0 +1,22 @@
+{{- if and .Values.gateway.enabled .Values.gateway.tls.enabled .Values.gateway.tls.certManager.enabled }}
+{{- $secretName := required "gateway.tls.secretName is required when gateway.tls.certManager.enabled" .Values.gateway.tls.secretName }}
+# cert-manager Certificate for a Gateway HTTPS listener. The Secret is created in the
+# release namespace. An existing Gateway must be in that namespace and must already
+# reference gateway.tls.secretName. Manage TLS separately for a Gateway in another namespace.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $secretName }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $secretName }}
+  {{- with .Values.gateway.hostnames }}
+  dnsNames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  issuerRef:
+    name: {{ required "gateway.tls.certManager.issuerRef.name is required when gateway.tls.certManager.enabled" .Values.gateway.tls.certManager.issuerRef.name }}
+    kind: {{ .Values.gateway.tls.certManager.issuerRef.kind | default "ClusterIssuer" }}
+    group: cert-manager.io
+{{- end }}

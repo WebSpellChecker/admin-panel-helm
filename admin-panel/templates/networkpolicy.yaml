@@ -1,0 +1,32 @@
+{{- if and .Values.networkPolicy.enabled .Values.web.enabled }}
+# Web-scoped policy: only the web role serves inbound HTTP. Worker/scheduler have no
+# inbound traffic, so they are intentionally not selected here.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "web") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "admin-panel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: http
+          protocol: TCP
+      {{- with .Values.networkPolicy.ingressFrom }}
+      # Restrict sources allowed to reach the web HTTP port.
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  egress:
+    # Default: allow all egress (DB, AppServer, SMTP, object store, DNS).
+    # Replace with explicit rules to restrict egress per environment.
+    - {}
+{{- end }}

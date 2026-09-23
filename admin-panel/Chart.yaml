@@ -1,0 +1,41 @@
+apiVersion: v2
+name: admin-panel
+description: A Helm chart for deploying WProofreader Admin-panel on Kubernetes
+type: application
+kubeVersion: ">=1.27.0-0"
+
+# Chart version. This is the first public release of the chart.
+version: 1.0.0
+
+# appVersion tracks the Admin-panel application image tag.
+appVersion: "3.0.0"
+
+keywords:
+  - wproofreader
+  - admin-panel
+  - laravel
+  - php
+home: https://wproofreader.com/
+sources:
+  - https://github.com/WebSpellChecker/admin-panel-helm
+maintainers:
+  - name: Infrastructure Team
+    email: support@webspellchecker.net
+icon: https://wproofreader.com/favicon.ico
+
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: First release for WProofreader Admin-panel 3.0.0 (On-Prem); image 3.0.0 or newer required
+    - kind: added
+      description: Web, queue worker, and scheduler roles from one application image
+    - kind: added
+      description: Pre-install/pre-upgrade migration hook Job with hook-managed ServiceAccount/ConfigMap/Secret
+    - kind: added
+      description: Gateway API and Ingress routing, cert-manager TLS, and optional same-origin WProofreader routes
+    - kind: added
+      description: Secrets via generated Secret or existingSecret; APP_KEY required; values.schema.json validation
+    - kind: added
+      description: Durable uploads with S3-compatible object storage or an optional ReadWriteMany PVC
+    - kind: added
+      description: Health probes, web autoscaling, a PodDisruptionBudget, per-role scheduling, and an optional web NetworkPolicy

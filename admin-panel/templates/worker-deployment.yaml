@@ -1,0 +1,70 @@
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "worker") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "admin-panel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "admin-panel.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        {{- include "admin-panel.podAnnotations" . | nindent 8 }}
+    spec:
+      {{- include "admin-panel.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      serviceAccountName: {{ include "admin-panel.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.worker.terminationGracePeriodSeconds }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: worker
+          image: {{ include "admin-panel.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # 'args' overrides CMD; the image ENTRYPOINT still runs but, with
+          # SKIP_ENTRYPOINT_CONFIG=true, bypasses its configuration scripts and
+          # execs the queue worker directly.
+          args: {{ toYaml .Values.worker.args | nindent 12 }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          envFrom:
+            {{- include "admin-panel.envFrom" . | nindent 12 }}
+          env:
+            # No web server here: skip env validation, nginx setup, migrations and
+            # the cache rebuild, as the Compose and Swarm stacks do.
+            - name: SKIP_ENTRYPOINT_CONFIG
+              value: "true"
+            {{- range $k, $v := .Values.worker.extraEnv }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "artisan queue:work"]
+            {{- toYaml .Values.worker.livenessProbe | nindent 12 }}
+          {{- with .Values.worker.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- include "admin-panel.volumeMounts" . | nindent 10 }}
+      {{- include "admin-panel.volumes" . | nindent 6 }}
+      {{- with (include "admin-panel.scheduling" .Values.worker) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+{{- end }}

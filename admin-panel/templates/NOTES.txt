@@ -1,0 +1,51 @@
+WProofreader Admin-panel release "{{ .Release.Name }}" is installed in namespace "{{ .Release.Namespace }}".
+
+Workloads:
+{{- if .Values.web.enabled }}
+  web: {{ if .Values.web.autoscaling.enabled }}HPA, {{ .Values.web.autoscaling.minReplicas }} to {{ .Values.web.autoscaling.maxReplicas }} replicas{{ else }}{{ .Values.web.replicaCount }} replica(s){{ end }}
+{{- end }}
+{{- if .Values.worker.enabled }}
+  worker: {{ .Values.worker.replicaCount }} replica(s)
+{{- end }}
+{{- if .Values.scheduler.enabled }}
+  scheduler: 1 replica
+{{- end }}
+{{- if .Values.migrations.enabled }}
+  migration hook: {{ .Values.migrations.hooks }}
+{{- end }}
+
+Application URL: {{ .Values.config.appUrl }}
+
+{{- if .Values.gateway.enabled }}
+Gateway API hostnames: {{ join ", " .Values.gateway.hostnames }}
+{{- else if .Values.ingress.enabled }}
+Ingress URLs:
+{{- range .Values.ingress.hosts }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else if .Values.web.enabled }}
+Routing is disabled. To access the application locally, run:
+
+  kubectl -n {{ .Release.Namespace }} port-forward service/{{ include "admin-panel.componentName" (list . "web") }} 8080:{{ .Values.web.service.port }}
+
+Then open http://127.0.0.1:8080.
+{{- end }}
+
+{{- if and .Values.web.enabled (or (gt (int .Values.web.replicaCount) 1) .Values.web.autoscaling.enabled) }}
+{{- if or (eq .Values.config.sessionDriver "file") (eq .Values.config.filesystemDisk "local") }}
+Before running more than one web replica:
+{{- if eq .Values.config.sessionDriver "file" }}
+  - Set config.sessionDriver to database so sessions are shared.
+{{- end }}
+{{- if eq .Values.config.filesystemDisk "local" }}
+  - Store uploads in S3-compatible storage or an RWX volume so every pod can access them.
+{{- end }}
+{{- end }}
+{{- end }}
+
+Verify the release:
+
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+{{- if .Values.web.enabled }}
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- end }}

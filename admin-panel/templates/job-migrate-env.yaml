@@ -1,0 +1,58 @@
+{{- if .Values.migrations.enabled }}
+{{/*
+Hook-managed ServiceAccount (own name: <fullname>-migrate, so its hook-succeeded deletion
+cannot remove the runtime SA of the same name) + env copies, created before the migrate Job
+(hook-weight -10/-5 < 0) in the same hook phase, so the Job can schedule and runs with
+the CURRENT configuration on both install (runtime SA/ConfigMap/Secret don't exist yet)
+and upgrade (they aren't updated until after pre-upgrade hooks). Deleted once the phase
+succeeds. When serviceAccount.create=false the user-managed SA already exists.
+*/}}
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "admin-panel.migrateServiceAccountName" . }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    "helm.sh/hook": {{ .Values.migrations.hooks | quote }}
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- with .Values.serviceAccount.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+---
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "migrate-env") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    "helm.sh/hook": {{ .Values.migrations.hooks | quote }}
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  {{- include "admin-panel.configEnvData" . | nindent 2 }}
+{{- if not .Values.secrets.existingSecret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "admin-panel.componentName" (list . "migrate-env") }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    "helm.sh/hook": {{ .Values.migrations.hooks | quote }}
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+type: Opaque
+stringData:
+  {{- include "admin-panel.secretEnvData" . | nindent 2 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,86 @@
+{{/*
+Non-secret application env (key/values), shared by the runtime ConfigMap and the
+migrate-hook ConfigMap so both always carry identical configuration.
+*/}}
+{{- define "admin-panel.configEnvData" -}}
+{{- $reserved := dict "APP_NAME" true "APP_ENV" true "APP_EDITION" true "APP_URL" true "LOG_OUTPUT_LEVEL" true "APP_SERVER_URL" true "APP_SERVER_INTERNAL_URL" true "SSL_MODE" true "PROXY_TYPE" true "SESSION_DRIVER" true "CACHE_STORE" true "QUEUE_CONNECTION" true "FILESYSTEM_DISK" true "JETSTREAM_PROFILE_PHOTO_DISK" true "DB_CONNECTION" true "DB_HOST" true "DB_PORT" true "DB_DATABASE" true "DB_USERNAME" true "SERVICE_DB_HOST" true "SERVICE_DB_PORT" true "SERVICE_DB_DATABASE" true "SERVICE_DB_USERNAME" true "MAIL_MAILER" true "MAIL_HOST" true "MAIL_PORT" true "MAIL_ENCRYPTION" true "MAIL_FROM_ADDRESS" true "MAIL_FROM_NAME" true "AWS_DEFAULT_REGION" true "AWS_BUCKET" true "AWS_ENDPOINT" true "AWS_USE_PATH_STYLE_ENDPOINT" true "LARAVEL_ENVIRONMENT_VALIDATION" true "LARAVEL_PROVISION_ADMIN_PANEL_DB" true "LARAVEL_SEED_ADMIN_PANEL_DB" true -}}
+{{- range $key := keys .Values.config.extraEnv -}}
+{{- if hasKey $reserved $key -}}
+{{- fail (printf "config.extraEnv.%s is managed by the chart; set its documented chart value instead" $key) -}}
+{{- end -}}
+{{- end -}}
+# --- Core application ---
+APP_NAME: {{ .Values.config.appName | quote }}
+APP_ENV: {{ .Values.config.appEnv | quote }}
+APP_EDITION: "onprem"
+APP_URL: {{ required "config.appUrl is required (the public URL clients use to reach Admin-panel, e.g. https://admin-panel.example.com)" .Values.config.appUrl | quote }}
+LOG_OUTPUT_LEVEL: {{ .Values.config.logOutputLevel | quote }}
+# --- WProofreader AppServer ---
+APP_SERVER_URL: {{ required "config.appServerUrl is required (the public WProofreader AppServer API URL, e.g. https://wproofreader.example.com/wscservice/api)" .Values.config.appServerUrl | quote }}
+{{- with .Values.config.appServerInternalUrl }}
+APP_SERVER_INTERNAL_URL: {{ . | quote }}
+{{- end }}
+# --- nginx / proxy ---
+SSL_MODE: {{ .Values.config.sslMode | quote }}
+PROXY_TYPE: {{ .Values.config.proxyType | quote }}
+# --- Drivers ---
+SESSION_DRIVER: {{ .Values.config.sessionDriver | quote }}
+CACHE_STORE: {{ .Values.config.cacheStore | quote }}
+QUEUE_CONNECTION: {{ .Values.config.queueConnection | quote }}
+FILESYSTEM_DISK: {{ .Values.config.filesystemDisk | quote }}
+JETSTREAM_PROFILE_PHOTO_DISK: {{ .Values.config.profilePhotoDisk | quote }}
+# --- Primary database ---
+DB_CONNECTION: "mysql"
+DB_HOST: {{ required "config.db.host is required (set to your MySQL host, or the bundled MySQL service)" .Values.config.db.host | quote }}
+DB_PORT: {{ .Values.config.db.port | quote }}
+DB_DATABASE: {{ .Values.config.db.database | quote }}
+DB_USERNAME: {{ .Values.config.db.username | quote }}
+# --- Service database (shared with WProofreader); blanks fall back in-app ---
+{{- with .Values.config.serviceDb.host }}
+SERVICE_DB_HOST: {{ . | quote }}
+{{- end }}
+SERVICE_DB_PORT: {{ .Values.config.serviceDb.port | quote }}
+SERVICE_DB_DATABASE: {{ .Values.config.serviceDb.database | quote }}
+{{- with .Values.config.serviceDb.username }}
+SERVICE_DB_USERNAME: {{ . | quote }}
+{{- end }}
+# --- Mail ---
+MAIL_MAILER: {{ .Values.config.mail.mailer | quote }}
+{{- with .Values.config.mail.host }}
+MAIL_HOST: {{ . | quote }}
+{{- end }}
+MAIL_PORT: {{ .Values.config.mail.port | quote }}
+MAIL_ENCRYPTION: {{ .Values.config.mail.encryption | quote }}
+MAIL_FROM_ADDRESS: {{ .Values.config.mail.fromAddress | quote }}
+MAIL_FROM_NAME: {{ .Values.config.mail.fromName | quote }}
+# --- Object storage (S3 API), only when configured ---
+{{- with .Values.config.objectStorage.region }}
+AWS_DEFAULT_REGION: {{ . | quote }}
+{{- end }}
+{{- with .Values.config.objectStorage.bucket }}
+AWS_BUCKET: {{ . | quote }}
+{{- end }}
+{{- with .Values.config.objectStorage.endpoint }}
+AWS_ENDPOINT: {{ . | quote }}
+{{- end }}
+{{- if .Values.config.objectStorage.endpoint }}
+# Path-style addressing only matters for a custom S3 endpoint (MinIO/Ceph). For AWS S3
+# (no endpoint) it is omitted so the SDK uses virtual-hosted addressing.
+AWS_USE_PATH_STYLE_ENDPOINT: {{ .Values.config.objectStorage.usePathStyleEndpoint | quote }}
+{{- end }}
+# --- Provisioning OFF for long-running pods (the migrate Job overrides this) ---
+LARAVEL_ENVIRONMENT_VALIDATION: "true"
+LARAVEL_PROVISION_ADMIN_PANEL_DB: "false"
+LARAVEL_SEED_ADMIN_PANEL_DB: "false"
+{{- range $k, $v := .Values.config.extraEnv }}
+{{ $k }}: {{ $v | quote }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "admin-panel.configMapName" . }}
+  labels:
+    {{- include "admin-panel.labels" . | nindent 4 }}
+data:
+  {{- include "admin-panel.configEnvData" . | nindent 2 }}
