@@ -4,8 +4,8 @@
 # Design principles:
 #   * One image, three roles: web (nginx+php-fpm), worker (queue), scheduler.
 #     Only web runs the image entrypoint; worker and scheduler start their
-#     artisan command directly (SKIP_ENTRYPOINT_CONFIG=true), like the Compose
-#     and Swarm stacks. Requires Admin-panel 3.0.0 or newer.
+#     artisan command directly (SKIP_ENTRYPOINT_CONFIG=true), like the Docker
+#     Compose example. Requires Admin-panel 3.0.0 or newer.
 #   * Provider-agnostic: portable defaults; databases and other services stay external.
 #   * Migrations run once via a Helm hook Job, never per pod.
 #   * Routing (Gateway API / Ingress) is opt-in, both disabled by default.
@@ -19,7 +19,7 @@ fullnameOverride: ""
 image:
   # -- Image registry. Empty uses the repository as-is (Docker Hub).
   registry: "docker.io"
-  # -- (string, required) Application image repository.
+  # -- Application image repository.
   repository: webspellchecker/admin-panel
   # -- Image tag. Defaults to the chart appVersion when empty.
   tag: ""
@@ -28,7 +28,7 @@ image:
   # -- Image pull policy.
   pullPolicy: IfNotPresent
 
-# -- Pull secrets for private registries / mirrored images. e.g. [{ name: regcred }]
+# -- Pull secrets for private registries or mirrored images. For example, [{ name: regcred }].
 imagePullSecrets: []
 
 # =============================================================================
@@ -39,20 +39,20 @@ config:
   appName: "Admin-panel"
   # -- Laravel environment (production|staging|local).
   appEnv: production
-  # -- (string, required) Public application URL. MUST match the hostname served by your ingress/gateway.
+  # -- (string, required) Public application URL. It must match the hostname served by the Ingress or Gateway.
   appUrl: ""
   # -- (string, required) Public WProofreader AppServer API URL.
   appServerUrl: ""
-  # -- In-cluster WProofreader AppServer URL (optional; e.g. http://wproofreader:8443/wscservice/api).
+  # -- Optional in-cluster WProofreader AppServer URL. When empty, the application uses appServerUrl.
   appServerInternalUrl: ""
   # -- Container log verbosity (debug|info|warn|error).
   logOutputLevel: info
-  # -- nginx SSL mode. Keep "off" when TLS terminates at the ingress or gateway.
+  # -- nginx SSL mode. Keep "off" when TLS terminates at the Ingress or Gateway.
   sslMode: "off"
   # -- Real-IP/proxy profile (generic|aws|cloudflare).
   proxyType: "generic"
 
-  # -- Session driver. Use 'database' for >1 web replica (NEVER file).
+  # -- Session driver. Use database when you run more than one web replica.
   sessionDriver: database
   # -- Cache store. The database option needs no additional service.
   cacheStore: database
@@ -60,8 +60,7 @@ config:
   queueConnection: database
   # -- Default filesystem disk (local|s3). Use s3 for shared storage across replicas.
   filesystemDisk: local
-  # -- Jetstream profile photo / avatar disk (public|s3). Use s3 to persist avatars
-  #    across pod restarts and share them across web replicas.
+  # -- Jetstream profile-photo disk (public|s3). Use s3 for persistent, shared files.
   profilePhotoDisk: public
 
   # Primary database (non-secret parts; password lives under secrets.db.password).
@@ -77,8 +76,7 @@ config:
 
   # Service database. WProofreader owns and provisions this database.
   # These are connection details only, pointing at WProofreader's MySQL.
-  # Empty host falls back to the primary DB host inside the app (handy for a
-  # single-MySQL local smoke test; in production this points at WProofreader's DB).
+  # An empty host uses the primary database host. Set a separate host in production.
   serviceDb:
     # -- Service DB host. When empty, the application uses config.db.host.
     host: ""
@@ -86,8 +84,7 @@ config:
     port: 3306
     # -- Service DB name.
     database: app_service_db
-    # -- Service DB username. When empty, Laravel uses config.db.username,
-    #    but the image requires an explicit value when serviceDb.host differs from db.host.
+    # -- Service DB username. Set it when serviceDb.host differs from db.host.
     username: ""
 
   # Mail (non-secret parts; credentials under secrets.mail.*).
@@ -98,7 +95,7 @@ config:
     host: ""
     # -- SMTP port.
     port: 587
-    # -- SMTP encryption (tls|ssl|"").
+    # -- Compatibility value for SMTP encryption. The port controls the TLS mode.
     encryption: tls
     # -- From address.
     fromAddress: "hello@example.com"
@@ -106,71 +103,64 @@ config:
     fromName: "Admin-panel"
 
   # Object storage over the S3 API (used when filesystemDisk/profilePhotoDisk = s3).
-  # Provider-agnostic: point `endpoint` at any S3-compatible store. On vanilla k8s run
-  # MinIO/Ceph RGW in-cluster (set endpoint + usePathStyleEndpoint: true); on AWS leave
-  # endpoint empty to use the regional S3 endpoint.
+  # Provider-agnostic: point `endpoint` at any S3-compatible store, for example MinIO or
+  # Ceph RGW (set endpoint + usePathStyleEndpoint: true). Leave endpoint empty only for
+  # Amazon S3, which then uses its regional endpoint. The AWS_* env names come from the
+  # Laravel S3 driver and apply to every S3-compatible store.
   objectStorage:
     # -- AWS_DEFAULT_REGION.
     region: ""
     # -- Bucket name.
     bucket: ""
-    # -- S3 API endpoint. When empty, the application uses the AWS regional endpoint.
+    # -- S3 API endpoint. When empty, the S3 client uses the Amazon S3 regional endpoint.
     endpoint: ""
-    # -- Path-style addressing. Only applied when `endpoint` is set (true for MinIO/Ceph);
-    #    ignored for AWS S3, which uses virtual-hosted addressing.
+    # -- Use path-style addressing when endpoint is set. Enable it for MinIO or Ceph.
     usePathStyleEndpoint: true
 
-  # -- Arbitrary extra NON-SECRET env (key/value). e.g. { FOO: "bar" }
+  # -- Additional non-secret environment variables. For example, { FOO: "bar" }.
   extraEnv: {}
 
 # =============================================================================
 # Secret values (rendered into a Secret unless existingSecret is set)
 # =============================================================================
 secrets:
-  # -- Use a pre-existing Secret (sealed-secrets/SOPS/Vault). When set, the
-  #    keys below are ignored and the chart renders no Secret of its own.
+  # -- Use an existing Secret. When set, the chart ignores the secret values below.
   existingSecret: ""
 
-  # -- Laravel APP_KEY when the chart creates the Secret. Generate with `php artisan key:generate`.
-  #    When existingSecret is set, put APP_KEY in that Secret instead.
+  # -- Laravel APP_KEY for a chart-managed Secret. Put APP_KEY in existingSecret when you use one.
   appKey: ""
 
   db:
     # -- Primary DB password (provide here, or via existingSecret).
     password: ""
   serviceDb:
-    # -- Service DB password. When empty, Laravel uses db.password,
-    #    but the image requires an explicit value when serviceDb.host differs from db.host.
+    # -- Service DB password. Set it when serviceDb.host differs from db.host.
     password: ""
   mail:
     # -- SMTP username.
     username: ""
     # -- SMTP password.
     password: ""
-  # S3-compatible object storage credentials. Works with MinIO, Ceph RGW, etc.
-  # (any S3 API), not just AWS. With AWS IRSA, leave both empty to use the IAM role chain.
+  # S3-compatible object storage credentials for any S3 API (MinIO, Ceph RGW, Amazon S3).
+  # Leave both empty when your platform supplies credentials through workload identity.
   s3:
-    # -- S3 access key id (MinIO/Ceph access key, or AWS key). Empty on AWS+IRSA.
+    # -- S3 access key id. Empty when workload identity supplies credentials.
     accessKeyId: ""
-    # -- S3 secret access key. Empty on AWS+IRSA.
+    # -- S3 secret access key. Empty when workload identity supplies credentials.
     secretAccessKey: ""
 
-  # -- Arbitrary extra SECRET env (key/value).
+  # -- Additional secret environment variables.
   extraSecretEnv: {}
 
 # =============================================================================
 # Shared persistent storage (optional), an alternative to S3 for avatars and uploads
 # =============================================================================
-# Mounts a ReadWriteMany volume at the Laravel storage/app dir so ALL file disks
-# (`local` maps to storage/app; `public` maps to storage/app/public) survive pod restarts and are
-# shared across web/worker/scheduler pods, WITHOUT an object store. Use this OR
-# filesystemDisk/profilePhotoDisk = s3. Requires an RWX-capable StorageClass (NFS,
-# CephFS, Longhorn, EFS, ...); plain block storage (RWO) cannot be shared across nodes.
+# A ReadWriteMany volume at storage/app persists files and shares them between roles.
+# Use this option or use S3. The StorageClass must support ReadWriteMany access.
 persistence:
-  # -- Create + mount a shared PVC for app file storage (uploads + avatars).
+  # -- Create and mount a shared PVC for uploads and profile photos.
   enabled: false
-  # -- Use an existing PVC instead of creating one. When set, the create-time
-  #    fields below (storageClass/accessModes/size) are ignored.
+  # -- Use an existing PVC. When set, the chart ignores storageClass, accessModes, and size.
   existingClaim: ""
   # -- StorageClass for the created PVC. When empty, Kubernetes uses the cluster default.
   storageClass: ""
@@ -178,10 +168,7 @@ persistence:
   accessModes: ["ReadWriteMany"]
   # -- Requested volume size.
   size: 5Gi
-  # -- Mount path inside the container. Defaults to the Laravel storage/app dir, which
-  #    is the parent of both the `local` (storage/app) and `public` (storage/app/public)
-  #    disks, so a single volume covers all uploads. Set to .../storage/app/public to
-  #    share only avatars. Must match the image's storage layout.
+  # -- Container mount path. The default covers the local and public Laravel disks.
   mountPath: /var/www/html/storage/app
   # -- Extra annotations on the created PVC.
   annotations: {}
@@ -220,8 +207,7 @@ securityContext:
     drop: ["ALL"]
   # readOnlyRootFilesystem: false  # app writes to storage/ and bootstrap/cache
 
-# -- HTTP probe targets. `path` is the PHP-FPM liveness ping. `appPath` is the Laravel
-#    health route used by the readiness probe and `helm test`, so both verify the app.
+# -- HTTP probe targets for PHP-FPM and the Laravel application.
 probes:
   # PHP-FPM liveness ping used by startup and liveness probes.
   path: /php-fpm-ping
@@ -233,12 +219,11 @@ probes:
 # Web role: nginx and PHP-FPM
 # =============================================================================
 web:
-  # -- Enable the web Deployment + Service.
+  # -- Enable the web Deployment and Service.
   enabled: true
-  # -- Web replicas (raise only after sessions+storage are externalized).
+  # -- Number of web replicas. Increase this only after you externalize sessions and storage.
   replicaCount: 1
-  # -- Override container args/CMD (empty keeps the image CMD = supervisord web stack).
-  #    The image ENTRYPOINT (env validation, config:cache) is always preserved.
+  # -- Override the image CMD. An empty list uses the default web stack.
   args: []
   # -- Extra env for the web role only.
   extraEnv: {}
@@ -247,22 +232,26 @@ web:
     type: ClusterIP
     # -- Service port (forwards to the container HTTP port).
     port: 80
+  # -- Resource requests and limits for the web container.
   resources:
     requests: { cpu: 250m, memory: 512Mi }
     limits: { cpu: "1", memory: 1Gi }
   autoscaling:
     # -- Enable HPA for the web role.
     enabled: false
+    # -- Minimum number of web replicas.
     minReplicas: 2
+    # -- Maximum number of web replicas.
     maxReplicas: 6
+    # -- Target average CPU use as a percentage of the resource request.
     targetCPUUtilizationPercentage: 70
     # targetMemoryUtilizationPercentage: 80
   podDisruptionBudget:
     # -- Enable a PodDisruptionBudget for the web role.
     enabled: false
-    # -- Minimum available web pods. Ignored when maxUnavailable is set.
+    # -- Minimum number of available web Pods. Ignored when maxUnavailable is set.
     minAvailable: 1
-  # -- Rolling update strategy (surge a new pod before removing old; zero downtime).
+  # -- Rolling-update strategy for the web Deployment.
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -270,10 +259,15 @@ web:
       maxSurge: 1
   # -- Probe timing overrides (path/port come from .Values.probes).
   livenessProbe: { initialDelaySeconds: 30, periodSeconds: 15, timeoutSeconds: 3, failureThreshold: 3 }
+  # -- Readiness-probe timing.
   readinessProbe: { initialDelaySeconds: 10, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3 }
+  # -- Startup-probe timing.
   startupProbe: { periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 40 }
+  # -- Node selector for web Pods.
   nodeSelector: {}
+  # -- Tolerations for web Pods.
   tolerations: []
+  # -- Affinity rules for web Pods.
   affinity: {}
 
 # =============================================================================
@@ -287,19 +281,23 @@ worker:
   enabled: true
   # -- Worker replicas.
   replicaCount: 1
-  # -- Args override = the CMD the entrypoint execs (same command as the Compose/Swarm stacks).
+  # -- Override the worker CMD.
   args: ["php", "artisan", "queue:work", "--queue=default", "--verbose", "--sleep=3", "--tries=3", "--max-time=3600"]
   # -- Extra env for the worker role only.
   extraEnv: {}
+  # -- Resource requests and limits for the worker container.
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { cpu: 500m, memory: 512Mi }
   # -- Graceful shutdown window: queue:work finishes the job in hand on SIGTERM.
   terminationGracePeriodSeconds: 300
-  # -- Liveness probe timing; the probe itself is `pgrep -f "artisan queue:work"`.
+  # -- Liveness-probe timing. The probe runs `pgrep -f "artisan queue:work"`.
   livenessProbe: { initialDelaySeconds: 15, periodSeconds: 30, timeoutSeconds: 5, failureThreshold: 3 }
+  # -- Node selector for worker Pods.
   nodeSelector: {}
+  # -- Tolerations for worker Pods.
   tolerations: []
+  # -- Affinity rules for worker Pods.
   affinity: {}
 
 # =============================================================================
@@ -308,20 +306,23 @@ worker:
 scheduler:
   # -- Enable the scheduler Deployment.
   enabled: true
-  # -- Args override = the foreground schedule worker (a single PHP process that
-  #    receives SIGTERM directly and shuts down gracefully, unlike a `sh -c` loop).
+  # -- Override the scheduler CMD.
   args: ["php", "artisan", "schedule:work"]
   # -- Grace period for the running scheduled task to finish on shutdown/rollout.
   terminationGracePeriodSeconds: 30
   # -- Extra env for the scheduler role only.
   extraEnv: {}
+  # -- Resource requests and limits for the scheduler container.
   resources:
     requests: { cpu: 50m, memory: 128Mi }
     limits: { cpu: 250m, memory: 256Mi }
-  # -- Liveness probe timing; the probe itself is `pgrep -f "artisan schedule:work"`.
+  # -- Liveness-probe timing. The probe runs `pgrep -f "artisan schedule:work"`.
   livenessProbe: { initialDelaySeconds: 15, periodSeconds: 30, timeoutSeconds: 5, failureThreshold: 3 }
+  # -- Node selector for scheduler Pods.
   nodeSelector: {}
+  # -- Tolerations for scheduler Pods.
   tolerations: []
+  # -- Affinity rules for scheduler Pods.
   affinity: {}
 
 # =============================================================================
@@ -339,17 +340,17 @@ migrations:
   backoffLimit: 3
   # -- Seconds the entrypoint waits for the DB before failing.
   waitDbTimeout: 120
-  # -- Hook phases. pre-install/pre-upgrade run the migration (with hook-managed env)
-  #    BEFORE the app pods are created/rolled, so the DB is always migrated first.
+  # -- Helm hook phases for the migration Job. Keep pre-install and pre-upgrade.
   hooks: "pre-install,pre-upgrade"
+  # -- Resource requests and limits for the migration container.
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { cpu: 500m, memory: 512Mi }
-  # -- Scheduling for the migrate Job. Set these to match the app nodes when they are
-  #    tainted/segregated, or the pre-install hook Job cannot schedule and the install
-  #    fails. (e.g. reuse web.nodeSelector/tolerations/affinity.)
+  # -- Node selector for the migration Job.
   nodeSelector: {}
+  # -- Tolerations for the migration Job.
   tolerations: []
+  # -- Affinity rules for the migration Job.
   affinity: {}
 
 # =============================================================================
@@ -357,56 +358,39 @@ migrations:
 # Gateway API is the primary/recommended path; Ingress is the compatibility option.
 # =============================================================================
 gateway:
-  # -- Enable Gateway API HTTPRoute (PRIMARY/recommended).
+  # -- Enable the Gateway API HTTPRoute.
   enabled: false
-  # -- Create a Gateway managed by this chart. If false, attach the HTTPRoute to an
-  #    existing Gateway via parentRefs.
+  # -- Create a Gateway. When false, parentRefs must identify an existing Gateway.
   create: false
-  # -- GatewayClass name (only used when create: true). Must match your controller's
-  #    class. Examples: eg (Envoy Gateway), istio, nginx (NGINX Gateway Fabric), traefik.
+  # -- GatewayClass name. Used only when create is true.
   gatewayClassName: ""
-  # -- Gateway listener port (only used when create: true). Must match the controller's
-  #    entryPoint/port. Envoy Gateway: 80. Traefik binds listeners to an entryPoint by
-  #    port. Its `web` entryPoint is 8000 (the Service still maps external 80 to 8000).
+  # -- HTTP listener port for a chart-managed Gateway.
   listenerPort: 80
-  # -- HTTPS listener (TLS termination at the Gateway). Provide a cert Secret in
-  #    `secretName` (e.g. issued by cert-manager). listenerPort must match the controller's
-  #    TLS entryPoint: Envoy 443, Traefik `websecure` 8443.
+  # -- HTTPS listener settings for TLS termination at the Gateway.
   tls:
     enabled: false
     listenerPort: 443
     secretName: ""
-    # -- Redirect plaintext HTTP to HTTPS (301). Only effective with create: true (the
-    #    chart owns the listeners): the app is served only on the HTTPS listeners and the
-    #    HTTP listener gets a redirect-only route. For an external Gateway, configure the
-    #    redirect there.
+    # -- Redirect HTTP to HTTPS with status 301. Used only for a chart-managed Gateway.
     httpsRedirect: true
-    # -- Issue the certificate with cert-manager. With create: false, this only creates
-    #    a Certificate in the release namespace. The existing Gateway must already use
-    #    the same Secret and must be in that namespace. Manage TLS separately when the
-    #    Gateway is in another namespace.
+    # -- Create a cert-manager Certificate in the release namespace.
     certManager:
       enabled: false
       issuerRef:
         name: ""              # e.g. selfsigned (dev) | letsencrypt-prod
         kind: ClusterIssuer   # ClusterIssuer | Issuer
-  # -- parentRefs to an existing Gateway (only used when create: false).
-  #    e.g. [{ name: my-gw, namespace: gateway-system }]
+  # -- References to an existing Gateway. Used only when create is false.
   parentRefs: []
   # -- Hostnames for the route.
   hostnames: ["admin-panel.example.com"]
   # -- Extra annotations on the HTTPRoute.
   annotations: {}
-  # -- Co-host the WProofreader AppServer under the same hostname(s) so the in-UI
-  #    widget can call it same-origin. Adds /wscservice(/api) routes before the
-  #    admin-panel catch-all, pointing at the WProofreader Service.
+  # -- Route WProofreader paths on the Admin-panel hostname.
   wproofreader:
     enabled: false
     serviceName: wproofreader-app
     servicePort: 80
-    # -- Namespace of the WProofreader Service when it is not the release namespace.
-    #    The chart then renders a ReferenceGrant into that namespace so the HTTPRoute
-    #    may reference the Service (Gateway API only; Ingress cannot cross namespaces).
+    # -- Namespace of the WProofreader Service. Empty uses the release namespace.
     namespace: ""
     # path prefixes routed to WProofreader (most specific first)
     paths: ["/wscservice/api", "/wscservice"]
@@ -416,10 +400,7 @@ ingress:
   enabled: false
   # -- IngressClass name (nginx|traefik|alb).
   className: ""
-  # -- Ingress annotations (e.g. cert-manager.io/cluster-issuer: letsencrypt-prod).
-  #    HTTP-to-HTTPS redirects are controller-specific. Add the setting for your controller,
-  #    e.g. nginx.ingress.kubernetes.io/ssl-redirect: "true" (nginx auto-redirects when
-  #    a tls block is set), or configure a redirect entryPoint/middleware on Traefik.
+  # -- Ingress annotations for cert-manager and controller-specific settings.
   annotations: {}
   # -- Hosts and paths (admin-panel backend).
   hosts:
@@ -427,11 +408,9 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-  # -- TLS config. e.g. [{ secretName: admin-panel-tls, hosts: [admin-panel.example.com] }]
+  # -- Ingress TLS settings.
   tls: []
-  # -- Co-host the WProofreader AppServer under the same host(s) so the in-UI widget
-  #    can call it same-origin. Adds the paths below (pointing at the WProofreader
-  #    Service) BEFORE the admin-panel paths on every host.
+  # -- Route WProofreader paths on each Admin-panel host.
   wproofreader:
     enabled: false
     serviceName: wproofreader-app
@@ -448,10 +427,7 @@ ingress:
 # Optional extras
 # =============================================================================
 networkPolicy:
-  # -- Render a NetworkPolicy for the web pods (HTTP ingress; allow-all egress by
-  #    default). Worker and scheduler Pods are not selected because they accept no inbound traffic.
+  # -- Create a NetworkPolicy for inbound web traffic. Egress remains open.
   enabled: false
-  # -- Restrict who may reach the web HTTP port (a list of NetworkPolicyPeer). Empty =
-  #    allow from anywhere in the cluster. e.g.
-  #    [{ namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: traefik } } }]
+  # -- Sources that can reach the web port. An empty list allows all cluster Pods.
   ingressFrom: []

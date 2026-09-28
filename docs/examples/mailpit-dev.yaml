@@ -1,8 +1,9 @@
-# Mailpit development SMTP catcher and web UI.
-# Apply:  kubectl apply -n admin-panel -f docs/examples/mailpit-dev.yaml
-# View caught mail:  kubectl -n admin-panel port-forward svc/mailpit 8025:8025
-# Then open: http://localhost:8025
-# Point the app at it:  MAIL_HOST=mailpit  MAIL_PORT=1025  MAIL_ENCRYPTION=""
+# Mailpit SMTP server and web interface for local development.
+# Apply: kubectl apply -n wsc -f docs/examples/mailpit-dev.yaml
+# Forward the web port: kubectl -n wsc port-forward svc/mailpit 8025:8025
+# Open http://localhost:8025.
+# Set config.mail.host to mailpit and config.mail.port to 1025 in the values file.
+# The default SMTP endpoint does not use TLS.
 ---
 apiVersion: apps/v1
 kind: Deployment

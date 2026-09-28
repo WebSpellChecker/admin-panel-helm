@@ -3,7 +3,7 @@ Non-secret application env (key/values), shared by the runtime ConfigMap and the
 migrate-hook ConfigMap so both always carry identical configuration.
 */}}
 {{- define "admin-panel.configEnvData" -}}
-{{- $reserved := dict "APP_NAME" true "APP_ENV" true "APP_EDITION" true "APP_URL" true "LOG_OUTPUT_LEVEL" true "APP_SERVER_URL" true "APP_SERVER_INTERNAL_URL" true "SSL_MODE" true "PROXY_TYPE" true "SESSION_DRIVER" true "CACHE_STORE" true "QUEUE_CONNECTION" true "FILESYSTEM_DISK" true "JETSTREAM_PROFILE_PHOTO_DISK" true "DB_CONNECTION" true "DB_HOST" true "DB_PORT" true "DB_DATABASE" true "DB_USERNAME" true "SERVICE_DB_HOST" true "SERVICE_DB_PORT" true "SERVICE_DB_DATABASE" true "SERVICE_DB_USERNAME" true "MAIL_MAILER" true "MAIL_HOST" true "MAIL_PORT" true "MAIL_ENCRYPTION" true "MAIL_FROM_ADDRESS" true "MAIL_FROM_NAME" true "AWS_DEFAULT_REGION" true "AWS_BUCKET" true "AWS_ENDPOINT" true "AWS_USE_PATH_STYLE_ENDPOINT" true "LARAVEL_ENVIRONMENT_VALIDATION" true "LARAVEL_PROVISION_ADMIN_PANEL_DB" true "LARAVEL_SEED_ADMIN_PANEL_DB" true -}}
+{{- $reserved := dict "APP_NAME" true "APP_ENV" true "APP_URL" true "LOG_OUTPUT_LEVEL" true "APP_SERVER_URL" true "APP_SERVER_INTERNAL_URL" true "SSL_MODE" true "PROXY_TYPE" true "SESSION_DRIVER" true "CACHE_STORE" true "QUEUE_CONNECTION" true "FILESYSTEM_DISK" true "JETSTREAM_PROFILE_PHOTO_DISK" true "DB_CONNECTION" true "DB_HOST" true "DB_PORT" true "DB_DATABASE" true "DB_USERNAME" true "SERVICE_DB_HOST" true "SERVICE_DB_PORT" true "SERVICE_DB_DATABASE" true "SERVICE_DB_USERNAME" true "MAIL_MAILER" true "MAIL_HOST" true "MAIL_PORT" true "MAIL_ENCRYPTION" true "MAIL_FROM_ADDRESS" true "MAIL_FROM_NAME" true "AWS_DEFAULT_REGION" true "AWS_BUCKET" true "AWS_ENDPOINT" true "AWS_USE_PATH_STYLE_ENDPOINT" true "LARAVEL_ENVIRONMENT_VALIDATION" true "LARAVEL_PROVISION_ADMIN_PANEL_DB" true "LARAVEL_SEED_ADMIN_PANEL_DB" true -}}
 {{- range $key := keys .Values.config.extraEnv -}}
 {{- if hasKey $reserved $key -}}
 {{- fail (printf "config.extraEnv.%s is managed by the chart; set its documented chart value instead" $key) -}}
@@ -12,7 +12,6 @@ migrate-hook ConfigMap so both always carry identical configuration.
 # --- Core application ---
 APP_NAME: {{ .Values.config.appName | quote }}
 APP_ENV: {{ .Values.config.appEnv | quote }}
-APP_EDITION: "onprem"
 APP_URL: {{ required "config.appUrl is required (the public URL clients use to reach Admin-panel, e.g. https://admin-panel.example.com)" .Values.config.appUrl | quote }}
 LOG_OUTPUT_LEVEL: {{ .Values.config.logOutputLevel | quote }}
 # --- WProofreader AppServer ---

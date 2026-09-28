@@ -6,7 +6,7 @@ while `appVersion` tracks the Admin-panel image.
 
 ## [Unreleased]
 
-Initial release for WProofreader Admin-panel 3.0.0, On-Prem edition.
+Initial release for WProofreader Admin-panel 3.0.0.
 
 ### Added
 
