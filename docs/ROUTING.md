@@ -14,7 +14,7 @@ Before enabling routing, provide:
 - A TLS Secret, or cert-manager and an Issuer when the chart must request one.
 
 Set `config.appUrl` to the public Admin-panel URL. Enable exactly one routing method.
-the chart rejects configurations that enable both.
+The chart rejects configurations that enable both.
 
 | Method | Enable with | Example |
 | --- | --- | --- |
