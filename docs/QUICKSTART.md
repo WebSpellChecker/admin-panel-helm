@@ -12,7 +12,7 @@ The commands assume the repository is your current directory and use:
 
 ## 1. Check your workstation and cluster
 
-You need Kubernetes 1.27 or newer, Helm 3.13 or newer, `kubectl`, and `openssl`.
+You need Kubernetes 1.27 or newer, Helm 3.15 or newer, `kubectl`, and `openssl`.
 
 ```bash
 kubectl cluster-info

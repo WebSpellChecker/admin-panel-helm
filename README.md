@@ -67,6 +67,15 @@ WProofreader Server. It migrates only the Admin-panel database.
 - [Chart values](admin-panel/README.md): generated value reference
 - [Changelog](CHANGELOG.md)
 
+## Related repositories
+
+| Repository | What it contains |
+| --- | --- |
+| [wproofreader-helm](https://github.com/WebSpellChecker/wproofreader-helm) | The Helm chart for WProofreader Server. It also creates the WProofreader service database with db-manager. |
+| [mysql-server-helm](https://github.com/WebSpellChecker/mysql-server-helm) | A Helm chart that runs MySQL in the cluster. |
+| [wproofreader-gitops](https://github.com/WebSpellChecker/wproofreader-gitops) | Argo CD and Flux configurations that deploy the full stack from Git: MySQL, WProofreader Server, Admin-panel, cert-manager, and a Gateway API controller. |
+| [wproofreader-docker](https://github.com/WebSpellChecker/wproofreader-docker) | Docker build files for WProofreader Server, and a Docker Compose example of the full stack on one host. |
+
 ## Contributing and support
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) before you send a pull request. Use GitHub
