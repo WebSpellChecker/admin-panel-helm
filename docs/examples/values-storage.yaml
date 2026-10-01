@@ -1,20 +1,21 @@
-# Durable storage for avatars and uploads. Choose one option.
-# (Without either, uploads are pod-local: lost on restart and not shared across replicas.)
+# Durable storage for profile photos and uploads.
+# This overlay enables S3 by default. To use a shared volume, remove the S3 settings
+# and enable the commented persistence settings.
 
-# Option A: S3-compatible object storage (MinIO, Ceph RGW, or AWS S3)
-# Stateless pods; the recommended path for multi-replica / autoscaled web.
+# Option A: S3-compatible object storage
 config:
   profilePhotoDisk: s3
   filesystemDisk: s3
   objectStorage:
-    endpoint: http://minio.minio.svc:9000   # leave empty for AWS S3
+    endpoint: http://minio.minio.svc:9000 # leave empty for Amazon S3
+    region: us-east-1
     bucket: admin-panel
-    usePathStyleEndpoint: true              # true for MinIO/Ceph, false for AWS
-# With secrets.existingSecret, add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to that
-# Secret. Omit both on AWS when workload identity/IRSA supplies credentials.
+    usePathStyleEndpoint: true # required by MinIO and Ceph
+# Add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to the existing Secret when the
+# platform does not supply credentials through workload identity.
 
-# Option B: shared ReadWriteMany volume (NFS, CephFS, Longhorn, or EFS)
-# No object store; needs an RWX-capable StorageClass. Uncomment to use instead of A.
+# Option B: shared ReadWriteMany volume
+# Remove the config block above. Then uncomment this block and set the StorageClass.
 # persistence:
 #   enabled: true
 #   storageClass: nfs-client
