@@ -9,17 +9,16 @@ A Helm chart for deploying WProofreader Admin-panel on Kubernetes
 ## Install
 
 Use the [quick start](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/QUICKSTART.md)
-to prepare the dependencies, create the Secret, install the chart, and verify the
-application. Start with
-[`values-minimal.yaml`](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/examples/values-minimal.yaml).
+to prepare the dependencies, create the Secret, install the chart, and verify the application.
+Start with [`values-minimal.yaml`](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/examples/values-minimal.yaml).
 The [`docs/examples/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/master/docs/examples)
 directory also contains routing and storage configurations.
 
 ## Architecture
 
-The chart runs one image as a web server, queue worker, and scheduler. A Helm hook Job
-runs database migrations. See the
-[operator guide](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/README.md)
+The chart runs one image as a web server, queue worker, and scheduler.
+A Helm hook Job runs database migrations.
+See the [operator guide](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/README.md)
 for details.
 
 ## Requirements
@@ -28,8 +27,8 @@ Kubernetes: `>=1.27.0-0`
 
 ## Values
 
-The **Required** column identifies empty defaults that you must set. The descriptions
-state all feature-specific requirements.
+The **Required** column identifies empty defaults that you must set.
+The descriptions state all feature-specific requirements.
 
 | Key | Type | Required | Default | Description |
 |-----|------|----------|---------|-------------|
