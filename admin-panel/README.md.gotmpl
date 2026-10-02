@@ -5,42 +5,29 @@
 
 {{ template "chart.description" . }}
 
-> Documentation and examples: [`docs/`](../docs/)
+> Documentation and examples: [`docs/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/master/docs)
 
-## How to install
+## Install
 
-Follow [`docs/QUICKSTART.md`](../docs/QUICKSTART.md) for dependency
-checks, Secret creation, installation, and application-level verification. The smallest
-values file looks like this:
-
-```yaml
-# values.yaml (minimal, external MySQL)
-config:
-  appUrl: http://127.0.0.1:8080
-  appServerUrl: https://wproofreader.example.com/wscservice/api
-  db: { host: mysql.example.com, database: admin_panel_db, username: admin_panel }
-  serviceDb: { host: wproofreader-mysql.example.com, port: 3306, database: cloud_service, username: app_service }
-  mail: { mailer: log }
-secrets:
-  existingSecret: admin-panel-secrets
-```
-
-```bash
-helm upgrade --install admin-panel ./admin-panel -n admin-panel -f values.yaml --atomic --timeout 10m
-```
-
-More scenarios (Gateway API + TLS, Ingress, S3/RWX storage): [`docs/examples/`](../docs/examples).
+Use the [quick start](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/QUICKSTART.md)
+to prepare the dependencies, create the Secret, install the chart, and verify the application.
+Start with [`values-minimal.yaml`](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/examples/values-minimal.yaml).
+The [`docs/examples/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/master/docs/examples)
+directory also contains routing and storage configurations.
 
 ## Architecture
 
-One image, three roles (web = nginx+php-fpm, worker = `queue:work`, scheduler = `schedule:work`)
-plus a one-shot migration hook Job. See the [documentation](../docs/README.md) for details.
+The chart runs one image as a web server, queue worker, and scheduler.
+A Helm hook Job runs database migrations.
+See the [operator guide](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/README.md)
+for details.
 
 {{ template "chart.requirementsSection" . }}
 
 ## Values
 
-The **Required** column flags which values you must set.
+The **Required** column identifies empty defaults that you must set.
+The descriptions state all feature-specific requirements.
 
 | Key | Type | Required | Default | Description |
 |-----|------|----------|---------|-------------|
@@ -48,4 +35,3 @@ The **Required** column flags which values you must set.
 | {{ .Key }} | {{ .Type | trimSuffix ", required" }} | {{ if hasSuffix "required" .Type }}**Yes**{{ else }}No{{ end }} | {{ if .Default }}{{ .Default }}{{ else }}{{ .AutoDefault }}{{ end }} | {{ if .Description }}{{ .Description }}{{ else }}{{ .AutoDescription }}{{ end }} |
 {{- end }}
 
-{{ template "helm-docs.versionFooter" . }}

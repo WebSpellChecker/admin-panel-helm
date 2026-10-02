@@ -1,48 +1,44 @@
-# Reference only. The chart creates this object.
+# Reference only. Do not apply this file.
+# The chart creates `<release>-env` from the `config.*` values. Inspect the live object:
+#   kubectl -n wsc get configmap admin-panel-env -o yaml
 #
-# The chart generates this ConfigMap (named `<release>-env`) from your `config.*` values
-# and injects it as non-secret env. There is no `existingConfigMap` option. It is shown
-# here so you can see the full non-secret env contract (handy for debugging or wiring an
-# External Secrets / GitOps pipeline). Inspect the live one with:
-#   kubectl -n admin-panel get configmap admin-panel-env -o yaml
-#
-# To add your own non-secret env, set `config.extraEnv` in values (see below);
-# for secret env, use `secrets.extraSecretEnv`.
+# Use `config.extraEnv` for additional non-secret variables. Use
+# `secrets.extraSecretEnv` for additional secret variables.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: admin-panel-env
-  namespace: admin-panel
+  namespace: wsc
 data:
-  # --- core ---
+  # Core
   APP_NAME: "Admin-panel"
   APP_ENV: "production"
-  APP_EDITION: "onprem"
   APP_URL: "https://admin-panel.example.com"
   LOG_OUTPUT_LEVEL: "info"
-  # --- WProofreader AppServer ---
+  # WProofreader AppServer
   APP_SERVER_URL: "https://wproofreader.example.com/wscservice/api"
-  # --- nginx / proxy ---
-  SSL_MODE: "off"               # TLS terminates at the ingress/gateway
+  # Include this key only when config.appServerInternalUrl is set.
+  APP_SERVER_INTERNAL_URL: "http://wproofreader-app.wsc.svc.cluster.local/wscservice/api"
+  # nginx and proxy
+  SSL_MODE: "off" # TLS terminates at the Ingress or Gateway
   PROXY_TYPE: "generic"
-  # --- drivers ---
+  # Drivers
   SESSION_DRIVER: "database"
   CACHE_STORE: "database"
   QUEUE_CONNECTION: "database"
   FILESYSTEM_DISK: "local"
   JETSTREAM_PROFILE_PHOTO_DISK: "public"
-  # --- primary database (password is in the Secret) ---
-  DB_CONNECTION: "mysql"
+  # Primary database. The password is in the Secret.
   DB_HOST: "mysql.example.com"
   DB_PORT: "3306"
   DB_DATABASE: "admin_panel_db"
   DB_USERNAME: "admin_panel"
-  # --- service database (WProofreader; password is in the Secret) ---
+  # WProofreader service database. The password is in the Secret.
   SERVICE_DB_HOST: "wproofreader-mysql.example.com"
   SERVICE_DB_PORT: "3306"
   SERVICE_DB_DATABASE: "cloud_service"
   SERVICE_DB_USERNAME: "app_service"
-  # --- mail ---
+  # Mail
   MAIL_MAILER: "smtp"
   MAIL_HOST: "smtp.example.com"
   MAIL_PORT: "587"
@@ -50,7 +46,7 @@ data:
   MAIL_FROM_ADDRESS: "hello@example.com"
   MAIL_FROM_NAME: "Admin-panel"
 
-# Equivalent values-file snippet to ADD custom env (the supported way):
+# Add custom variables through the values file:
 #
 #   config:
 #     extraEnv:

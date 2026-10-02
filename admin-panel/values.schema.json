@@ -16,10 +16,7 @@
     "roleEnvMap": {
       "type": "object",
       "propertyNames": {
-        "allOf": [
-          { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
-          { "not": { "enum": ["APP_EDITION"] } }
-        ]
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
       },
       "additionalProperties": { "type": ["string", "number", "boolean"] }
     },
@@ -28,7 +25,7 @@
       "propertyNames": {
         "allOf": [
           { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
-          { "not": { "enum": ["APP_EDITION", "SKIP_ENTRYPOINT_CONFIG"] } }
+          { "not": { "enum": ["SKIP_ENTRYPOINT_CONFIG"] } }
         ]
       },
       "additionalProperties": { "type": ["string", "number", "boolean"] }

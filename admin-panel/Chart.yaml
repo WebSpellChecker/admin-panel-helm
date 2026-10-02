@@ -21,12 +21,12 @@ sources:
 maintainers:
   - name: Infrastructure Team
     email: support@webspellchecker.net
-icon: https://wproofreader.com/favicon.ico
 
 annotations:
+  artifacthub.io/license: MIT
   artifacthub.io/changes: |
     - kind: added
-      description: First release for WProofreader Admin-panel 3.0.0 (On-Prem); image 3.0.0 or newer required
+      description: First release for WProofreader Admin-panel 3.0.0; image 3.0.0 or newer required
     - kind: added
       description: Web, queue worker, and scheduler roles from one application image
     - kind: added
