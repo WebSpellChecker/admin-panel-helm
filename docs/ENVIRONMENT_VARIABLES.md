@@ -1,8 +1,8 @@
 # Environment variables on Kubernetes
 
-This page maps Helm values to the environment variables consumed by Admin-panel `3.0.0`
-or newer. The chart stores non-secret variables in a ConfigMap and reads secrets from a
-Kubernetes Secret. It does not use a Laravel `.env` file.
+This page maps Helm values to the environment variables consumed by Admin-panel `3.0.0` or newer.
+The chart stores non-secret variables in a ConfigMap and reads secrets from a Kubernetes Secret.
+It does not use a Laravel `.env` file.
 
 ## How values become environment variables
 
@@ -10,19 +10,21 @@ Each role receives the same base environment:
 
 1. The chart-managed ConfigMap for non-secret values.
 2. The chart-managed Secret, or `secrets.existingSecret`.
-3. Role-specific variables from `web.extraEnv`, `worker.extraEnv`, or
-   `scheduler.extraEnv` where applicable.
+3. Role-specific variables from `web.extraEnv`, `worker.extraEnv`,
+   or `scheduler.extraEnv` where applicable.
 
-The web Pods and migration Job run the image entrypoint scripts. The worker and
-scheduler Pods set `SKIP_ENTRYPOINT_CONFIG=true` and start Artisan directly. nginx,
+The web Pods and migration Job run the image entrypoint scripts.
+The worker and scheduler Pods set `SKIP_ENTRYPOINT_CONFIG=true` and start Artisan directly. nginx,
 PHP-FPM, and entrypoint tuning does not apply to the worker or scheduler.
 
 Use `config.extraEnv` for an application or container variable that every role needs.
-Use `secrets.extraSecretEnv` for a secret variable that every role needs. Do not put
-passwords, tokens, private keys, webhook secrets, or OAuth client secrets in `config.extraEnv`.
+Use `secrets.extraSecretEnv` for a secret variable that every role needs.
+Do not put passwords, tokens, private keys, webhook secrets,
+or OAuth client secrets in `config.extraEnv`.
 
-Do not repeat a chart-managed variable in an `extraEnv` map. Set its documented Helm
-value. Duplicate environment keys can produce inconsistent results.
+Do not repeat a chart-managed variable in an `extraEnv` map.
+Set its documented Helm value.
+Duplicate environment keys can produce inconsistent results.
 
 ## Chart-managed non-secret variables
 
@@ -61,8 +63,9 @@ value. Duplicate environment keys can produce inconsistent results.
 | `AWS_USE_PATH_STYLE_ENDPOINT` | `config.objectStorage.usePathStyleEndpoint` | Rendered only when `endpoint` is set |
 | `LARAVEL_MIGRATION_WAIT_DB_TIMEOUT` | `migrations.waitDbTimeout` | Migration Pod only. The chart default is `120` seconds. The image default is `10`. |
 
-The chart also sets internal variables for each role. Do not set these variables. See
-[Other application and container variables](#other-application-and-container-variables).
+The chart also sets internal variables for each role.
+Do not set these variables.
+See [Other application and container variables](#other-application-and-container-variables).
 
 Laravel uses the `AWS_*` names for Amazon S3 and other S3-compatible stores.
 
@@ -70,16 +73,17 @@ Laravel uses the `AWS_*` names for Amazon S3 and other S3-compatible stores.
 
 Admin-panel uses two addresses for WProofreader Server:
 
-- `APP_SERVER_URL` is required. The browser, the in-app widget, and the browser
-  extension send their requests to this address, so it must be reachable from the
-  users' network.
-- `APP_SERVER_INTERNAL_URL` is optional. Admin-panel uses it for its own server-side
-  calls, such as the license check and service management. When it is not set,
-  Admin-panel sends these calls to `APP_SERVER_URL`.
+- `APP_SERVER_URL` is required.
+  The browser, the in-app widget, and the browser extension send their requests to this address,
+  so it must be reachable from the users' network.
+- `APP_SERVER_INTERNAL_URL` is optional.
+  Admin-panel uses it for its own server-side calls, such as the license check
+  and service management.
+  When it is not set, Admin-panel sends these calls to `APP_SERVER_URL`.
 
-Leave `APP_SERVER_INTERNAL_URL` empty when the Admin-panel Pods can reach
-`APP_SERVER_URL`. Set it when they cannot, for example when the public DNS name does not
-resolve inside the cluster, or when you want these calls to stay inside the cluster.
+Leave `APP_SERVER_INTERNAL_URL` empty when the Admin-panel Pods can reach `APP_SERVER_URL`.
+Set it when they cannot, for example when the public DNS name does not resolve inside the cluster,
+or when you want these calls to stay inside the cluster.
 Use the WProofreader Service address:
 
 ```yaml
@@ -90,9 +94,9 @@ config:
 
 ### Logging
 
-`LOG_OUTPUT_LEVEL` is not Laravel's minimum application log level. The image defaults
-`LOG_CHANNEL` to `stdout`, which writes JSON to the container log. Set `LOG_LEVEL` in
-`config.extraEnv` when you need to change Laravel logging:
+`LOG_OUTPUT_LEVEL` is not Laravel's minimum application log level.
+The image defaults `LOG_CHANNEL` to `stdout`, which writes JSON to the container log.
+Set `LOG_LEVEL` in `config.extraEnv` when you need to change Laravel logging:
 
 ```yaml
 config:
@@ -104,8 +108,8 @@ config:
 ## Chart-managed secret variables
 
 When `secrets.existingSecret` is empty, the chart renders these keys from Helm values.
-When it is set, the chart renders no Secret: create the keys you need in that existing
-Secret instead.
+When it is set, the chart renders no Secret: create the keys you need in
+that existing Secret instead.
 
 | Environment variable | Helm value | Requirement | When needed |
 | --- | --- | --- | --- |
@@ -117,45 +121,46 @@ Secret instead.
 | `AWS_ACCESS_KEY_ID` | `secrets.s3.accessKeyId` | Conditional | Static credentials for S3-compatible storage. Omit when workload identity supplies credentials. |
 | `AWS_SECRET_ACCESS_KEY` | `secrets.s3.secretAccessKey` | Conditional | Static credentials for S3-compatible storage. Omit when workload identity supplies credentials. |
 
-`Required` means that the Secret must contain the key. `Conditional` means that the
-requirement depends on the selected feature or database configuration.
+`Required` means that the Secret must contain the key.
+`Conditional` means that the requirement depends on the selected feature or database configuration.
 
-Admin-panel has no root database credentials: migrations connect as `DB_USERNAME`, which
-therefore needs the privileges to create and alter tables.
+Admin-panel has no root database credentials: migrations connect as `DB_USERNAME`,
+which therefore needs the privileges to create and alter tables.
 
 With an existing Secret, start with the three keys in
-[`examples/secret.yaml`](examples/secret.yaml). Add optional keys only when the matching
-feature is enabled. Empty keys are unnecessary.
+[`examples/secret.yaml`](examples/secret.yaml).
+Add optional keys only when the matching feature is enabled.
+Empty keys are unnecessary.
 
 ## License
 
 Configure the license in WProofreader Server through the `wproofreader-helm`
-`licenseTicketID` value. Admin-panel reads only the license status. It uses
-`APP_SERVER_INTERNAL_URL`, or `APP_SERVER_URL` when the internal URL is empty. Optional
-`LICENSE_*` variables control caching, timeouts, and TLS verification. The
-[WProofreader documentation](https://docs.wproofreader.com/) describes them. Set them in
-`config.extraEnv`.
+`licenseTicketID` value.
+Admin-panel reads only the license status.
+It uses `APP_SERVER_INTERNAL_URL`, or `APP_SERVER_URL` when the internal URL is empty.
+Optional `LICENSE_*` variables control caching, timeouts, and TLS verification.
+The [WProofreader documentation](https://docs.wproofreader.com/) describes them.
+Set them in `config.extraEnv`.
 
 ## Mail is optional
 
-The application continues to work without outbound mail. It uses `MAIL_MAILER` and
-`MAIL_HOST` to detect this configuration:
+The application continues to work without outbound mail.
+It uses `MAIL_MAILER` and `MAIL_HOST` to detect this configuration:
 
 - `MAIL_MAILER=log`, or `smtp` without a host, disables outbound mail.
 - The Team page provides an invitation link that you can copy.
-- Administrators can reset passwords from the member page or with
-  `php artisan user:reset-password`.
+- Administrators can reset passwords from the member page or with `php artisan user:reset-password`.
 - The application disables self-service password reset and email-change confirmation.
   Their routes return 404 until SMTP is configured.
 
-Set `config.mail.mailer: log` for an installation without SMTP. When a relay is
-available, set `smtp`, `config.mail.host`, and the SMTP credentials in the Secret.
+Set `config.mail.mailer: log` for an installation without SMTP.
+When a relay is available, set `smtp`, `config.mail.host`, and the SMTP credentials in the Secret.
 
 ## OAuth sign-in
 
-Google, Microsoft, and LinkedIn sign-in need both a client ID and a client secret. There
-is no separate enable flag. If one value is missing, the application logs a warning and
-disables that provider.
+Google, Microsoft, and LinkedIn sign-in need both a client ID and a client secret.
+There is no separate enable flag.
+If one value is missing, the application logs a warning and disables that provider.
 
 | Provider | `config.extraEnv` | Secret key |
 | --- | --- | --- |
@@ -163,18 +168,18 @@ disables that provider.
 | Microsoft | `MICROSOFT_CLIENT_ID`, optional `MICROSOFT_REDIRECT_URI` | `MICROSOFT_CLIENT_SECRET` |
 | LinkedIn | `LINKEDIN_CLIENT_ID`, optional `LINKEDIN_REDIRECT_URI` | `LINKEDIN_CLIENT_SECRET` |
 
-The redirect URI defaults to `APP_URL` plus `/oauth/<provider>/callback`, where the
-provider segment is `google`, `microsoft`, or `linkedin-openid`. Set the variable only
-when the provider must call back a different address. Provider sign-in never creates an
-account: the person must already have been invited.
+The redirect URI defaults to `APP_URL` plus `/oauth/<provider>/callback`,
+where the provider segment is `google`, `microsoft`, or `linkedin-openid`.
+Set the variable only when the provider must call back a different address.
+Provider sign-in never creates an account: the person must already have been invited.
 
 ## Other application and container variables
 
-The Admin-panel image supports more application and container variables. These include
-session, logging, analytics, nginx, PHP, PHP-FPM, and OPcache settings. The
-[WProofreader documentation](https://docs.wproofreader.com/) describes them. Leave them
-unset unless you need the related feature. Change container settings only after you
-measure a representative workload.
+The Admin-panel image supports more application and container variables.
+These include session, logging, analytics, nginx, PHP, PHP-FPM, and OPcache settings.
+The [WProofreader documentation](https://docs.wproofreader.com/) describes them.
+Leave them unset unless you need the related feature.
+Change container settings only after you measure a representative workload.
 
 Pass them to the chart this way:
 
@@ -196,17 +201,19 @@ secrets:
     GOOGLE_CLIENT_SECRET: replace-through-your-secret-manager
 ```
 
-If `secrets.existingSecret` is set, the chart ignores `secrets.extraSecretEnv`. Put secret
-keys such as `GOOGLE_CLIENT_SECRET` directly in that Kubernetes Secret.
+If `secrets.existingSecret` is set, the chart ignores `secrets.extraSecretEnv`.
+Put secret keys such as `GOOGLE_CLIENT_SECRET` directly in that Kubernetes Secret.
 
-The chart sets variables that control ports, probes, and role behavior. Do not override
-`DB_CONNECTION`, `NGINX_HTTP_PORT`, `PHP_PING_PATH`, `SKIP_ENTRYPOINT_CONFIG`,
-`SKIP_WEBSERVER_CONFIGURATION`, `LARAVEL_ENVIRONMENT_VALIDATION`, or the
-`LARAVEL_PROVISION_*` and `LARAVEL_SEED_*` variables. Do not set
-`SKIP_LARAVEL_CONFIGURATION=true`. It also skips the setup-token step.
+The chart sets variables that control ports, probes, and role behavior.
+Do not override `DB_CONNECTION`, `NGINX_HTTP_PORT`, `PHP_PING_PATH`, `SKIP_ENTRYPOINT_CONFIG`,
+`SKIP_WEBSERVER_CONFIGURATION`, `LARAVEL_ENVIRONMENT_VALIDATION`,
+or the `LARAVEL_PROVISION_*` and `LARAVEL_SEED_*` variables.
+Do not set `SKIP_LARAVEL_CONFIGURATION=true`.
+It also skips the setup-token step.
 
-The worker and scheduler bypass the entrypoint. Entrypoint variables affect only the web
-Pods and migration Job. nginx and PHP-FPM variables affect only the web Pods.
+The worker and scheduler bypass the entrypoint.
+Entrypoint variables affect only the web Pods and migration Job. nginx
+and PHP-FPM variables affect only the web Pods.
 
 ## Inspect the effective environment safely
 
@@ -223,6 +230,7 @@ kubectl -n wsc get secret admin-panel-secrets \
   -o go-template='{{range $key, $_ := .data}}{{printf "%s\n" $key}}{{end}}'
 ```
 
-After changing a chart-managed Secret, `helm upgrade` rolls the Pods because the chart
-adds a checksum annotation. An existing Secret needs a manual restart. See
-[Secret rotation](README.md#secret-rotation).
+After changing a chart-managed Secret, `helm upgrade` rolls the Pods because the chart adds
+a checksum annotation.
+An existing Secret needs a manual restart.
+See [Secret rotation](README.md#secret-rotation).
