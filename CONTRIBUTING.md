@@ -46,7 +46,21 @@ Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 for every commit and for every pull request title.
 The release tooling reads the commit messages on `main` to select the next version
 and to write the changelog.
-Squash-merge a pull request with its title as the commit subject.
+
+Pull requests are merged with a merge commit, so every commit of your branch goes to `main`.
+Each `feat` and `fix` commit becomes one line in the changelog.
+Before you ask for a review, clean the branch:
+
+- Squash fixups and work-in-progress commits with `git rebase -i origin/main`.
+- Give each remaining commit a Conventional Commits subject.
+- Update the branch with `git rebase origin/main`, not with a merge from `main`.
+
+The `commit-messages` check rejects a pull request with a commit that does not follow the format.
+Run the same check before you push:
+
+```bash
+./scripts/check-commit-messages.sh origin/main HEAD
+```
 
 | Type | Use it for | Version change |
 | --- | --- | --- |
