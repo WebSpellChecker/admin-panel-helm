@@ -1,7 +1,7 @@
 # Admin-panel Helm chart
 
-[![Chart validation](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/lint.yml)
-[![Secret scan](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/secret-scan.yml/badge.svg?branch=master)](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/secret-scan.yml)
+[![Chart validation](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/lint.yml)
+[![Secret scan](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/WebSpellChecker/admin-panel-helm/actions/workflows/secret-scan.yml)
 
 This chart deploys WProofreader Admin-panel on Kubernetes.
 It is intended for operators who already have WProofreader Server and access to MySQL 8.4.
@@ -19,10 +19,10 @@ as described in [step 4 of the quick start](docs/QUICKSTART.md#4-create-the-valu
 
 ```bash
 curl -fsSL -o values.local.yaml \
-  https://raw.githubusercontent.com/WebSpellChecker/admin-panel-helm/master/docs/examples/values-minimal.yaml
+  https://raw.githubusercontent.com/WebSpellChecker/admin-panel-helm/main/docs/examples/values-minimal.yaml
 ```
 
-To match a pinned chart version, replace `master` with its release tag, for example `v1.0.0`.
+To match a pinned chart version, replace `main` with its release tag, for example `v1.0.0`.
 
 Install the chart:
 

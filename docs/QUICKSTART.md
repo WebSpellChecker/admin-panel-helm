@@ -153,7 +153,7 @@ Without a clone of this repository, download the example instead:
 
 ```bash
 curl -fsSL -o values.local.yaml \
-  https://raw.githubusercontent.com/WebSpellChecker/admin-panel-helm/master/docs/examples/values-minimal.yaml
+  https://raw.githubusercontent.com/WebSpellChecker/admin-panel-helm/main/docs/examples/values-minimal.yaml
 ```
 
 The file holds only non-secret settings.

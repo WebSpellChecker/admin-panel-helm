@@ -18,7 +18,7 @@ Do not put credentials, license data, or customer data in an issue.
 You need Helm 3, kubeconform, helm-docs 1.14.2, and pre-commit.
 Run all commands from the repository root.
 
-1. Create a branch from `development`.
+1. Create a branch from `main`.
 2. Make one focused change.
    Use two-space YAML indentation and kebab-case filenames.
 3. Add a `# --` description for each public value.
@@ -46,7 +46,7 @@ Use Semantic Versioning.
 Update `CHANGELOG.md` and the `artifacthub.io/changes` annotation in the same pull request.
 A documentation-only change outside `admin-panel/` does not need a chart version bump.
 
-The release workflow publishes each new chart version after it reaches `master`.
+The release workflow publishes each new chart version after it reaches `main`.
 It creates a `v<version>` GitHub Release and updates the Helm repository index on
 the `gh-pages` branch.
 The repository administrator must create that branch and configure GitHub Pages

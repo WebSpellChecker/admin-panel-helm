@@ -1,5 +1,5 @@
 # chart-testing configuration. See https://github.com/helm/chart-testing#configuration
-target-branch: development
+target-branch: main
 # Use chart-dirs, not an explicit charts list: ct skips the version check for listed
 # charts. With chart-dirs, ct lints the chart only when it changed against the target
 # branch. `make check` validates the examples on every run.
