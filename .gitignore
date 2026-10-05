@@ -2,8 +2,6 @@
 *.tgz
 **/charts/*.tgz
 **/Chart.lock
-.cr-index/
-.cr-release-packages/
 dist/
 .idea/
 .vscode/

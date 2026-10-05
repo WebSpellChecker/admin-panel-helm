@@ -13,8 +13,8 @@ Write `None` when the change has no operator impact.
 - [ ] `pre-commit run --all-files`
 - [ ] I tested each affected feature with its enabled and disabled settings.
 - [ ] I added or updated an example when the change affects configuration.
-- [ ] I updated `Chart.yaml`, the changelog, and Artifact Hub changes when
-  a chart version bump is required.
+- [ ] The pull request title is a Conventional Commit, for example `fix: ...` or `feat!: ...`.
+  Do not change the chart version or the changelog; the release pull request does it.
 
 List any additional commands and relevant rendered-manifest excerpts:
 

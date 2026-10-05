@@ -67,7 +67,7 @@ It migrates only the Admin-panel database.
 - [Operator guide](docs/README.md): storage, scaling, upgrades, and troubleshooting
 - [Examples](docs/examples/README.md): minimal, routing, and storage values
 - [Chart values](admin-panel/README.md): generated value reference
-- [Changelog](CHANGELOG.md)
+- [Changelog](admin-panel/CHANGELOG.md)
 
 ## Related repositories
 
