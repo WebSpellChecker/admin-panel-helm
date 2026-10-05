@@ -4,21 +4,21 @@
 
 A Helm chart for deploying WProofreader Admin-panel on Kubernetes
 
-> Documentation and examples: [`docs/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/master/docs)
+> Documentation and examples: [`docs/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/main/docs)
 
 ## Install
 
-Use the [quick start](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/QUICKSTART.md)
+Use the [quick start](https://github.com/WebSpellChecker/admin-panel-helm/blob/main/docs/QUICKSTART.md)
 to prepare the dependencies, create the Secret, install the chart, and verify the application.
-Start with [`values-minimal.yaml`](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/examples/values-minimal.yaml).
-The [`docs/examples/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/master/docs/examples)
+Start with [`values-minimal.yaml`](https://github.com/WebSpellChecker/admin-panel-helm/blob/main/docs/examples/values-minimal.yaml).
+The [`docs/examples/`](https://github.com/WebSpellChecker/admin-panel-helm/tree/main/docs/examples)
 directory also contains routing and storage configurations.
 
 ## Architecture
 
 The chart runs one image as a web server, queue worker, and scheduler.
 A Helm hook Job runs database migrations.
-See the [operator guide](https://github.com/WebSpellChecker/admin-panel-helm/blob/master/docs/README.md)
+See the [operator guide](https://github.com/WebSpellChecker/admin-panel-helm/blob/main/docs/README.md)
 for details.
 
 ## Requirements
