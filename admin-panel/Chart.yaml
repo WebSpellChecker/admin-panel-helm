@@ -24,18 +24,3 @@ maintainers:
 
 annotations:
   artifacthub.io/license: MIT
-  artifacthub.io/changes: |
-    - kind: added
-      description: First release for WProofreader Admin-panel 3.0.0; image 3.0.0 or newer required
-    - kind: added
-      description: Web, queue worker, and scheduler roles from one application image
-    - kind: added
-      description: Pre-install/pre-upgrade migration hook Job with hook-managed ServiceAccount/ConfigMap/Secret
-    - kind: added
-      description: Gateway API and Ingress routing, cert-manager TLS, and optional same-origin WProofreader routes
-    - kind: added
-      description: Secrets via generated Secret or existingSecret; APP_KEY required; values.schema.json validation
-    - kind: added
-      description: Durable uploads with S3-compatible object storage or an optional ReadWriteMany PVC
-    - kind: added
-      description: Health probes, web autoscaling, a PodDisruptionBudget, per-role scheduling, and an optional web NetworkPolicy
