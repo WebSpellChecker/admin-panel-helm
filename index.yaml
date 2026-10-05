@@ -1,0 +1,43 @@
+apiVersion: v1
+entries:
+  admin-panel:
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: added
+          description: First release for WProofreader Admin-panel 3.0.0; image 3.0.0 or newer required
+        - kind: added
+          description: Web, queue worker, and scheduler roles from one application image
+        - kind: added
+          description: Pre-install/pre-upgrade migration hook Job with hook-managed ServiceAccount/ConfigMap/Secret
+        - kind: added
+          description: Gateway API and Ingress routing, cert-manager TLS, and optional same-origin WProofreader routes
+        - kind: added
+          description: Secrets via generated Secret or existingSecret; APP_KEY required; values.schema.json validation
+        - kind: added
+          description: Durable uploads with S3-compatible object storage or an optional ReadWriteMany PVC
+        - kind: added
+          description: Health probes, web autoscaling, a PodDisruptionBudget, per-role scheduling, and an optional web NetworkPolicy
+      artifacthub.io/license: MIT
+    apiVersion: v2
+    appVersion: 3.0.0
+    created: "2026-10-05T09:46:21.519111531Z"
+    description: A Helm chart for deploying WProofreader Admin-panel on Kubernetes
+    digest: db9629f37c600fd61d07ed1dce42b56c8ea2c35f57c3ab427e756011c0ff5de4
+    home: https://wproofreader.com/
+    keywords:
+    - wproofreader
+    - admin-panel
+    - laravel
+    - php
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: support@webspellchecker.net
+      name: Infrastructure Team
+    name: admin-panel
+    sources:
+    - https://github.com/WebSpellChecker/admin-panel-helm
+    type: application
+    urls:
+    - https://github.com/WebSpellChecker/admin-panel-helm/releases/download/v1.0.0/admin-panel-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-10-05T09:46:21.519116709Z"
