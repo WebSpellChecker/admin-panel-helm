@@ -4,7 +4,7 @@ This file records changes to the Admin-panel Helm chart.
 The chart follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html):
 `version` tracks the chart, while `appVersion` tracks the Admin-panel image.
 
-## [Unreleased]
+## [1.0.0] (2026-10-05)
 
 Initial release for WProofreader Admin-panel 3.0.0.
 
