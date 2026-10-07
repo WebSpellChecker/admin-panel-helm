@@ -5,10 +5,10 @@ type: application
 kubeVersion: ">=1.27.0-0"
 
 # Chart version. This is the first public release of the chart.
-version: 1.0.0
+version: 1.1.0
 
 # appVersion tracks the Admin-panel application image tag.
-appVersion: "3.0.0"
+appVersion: "3.1.0"
 
 keywords:
   - wproofreader
