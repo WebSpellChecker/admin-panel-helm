@@ -5,7 +5,7 @@ entries:
       artifacthub.io/license: MIT
     apiVersion: v2
     appVersion: 3.1.0
-    created: "2026-10-07T16:22:30.581312209Z"
+    created: "2026-10-07T16:49:24.603795171Z"
     description: A Helm chart for deploying WProofreader Admin-panel on Kubernetes
     digest: 867414e60519365d68decf4d68a831c4343b6e1c8906bdf6c75a9f938d3db811
     home: https://wproofreader.com/
@@ -64,4 +64,4 @@ entries:
     urls:
     - https://github.com/WebSpellChecker/admin-panel-helm/releases/download/v1.0.0/admin-panel-1.0.0.tgz
     version: 1.0.0
-generated: "2026-10-07T16:22:30.579501288Z"
+generated: "2026-10-07T16:49:24.602109694Z"
