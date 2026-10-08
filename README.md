@@ -9,6 +9,10 @@ Admin-panel `3.0.0` or newer is required.
 
 For a first installation, follow the [quick start](docs/QUICKSTART.md).
 
+To install the full stack (MySQL, WProofreader Server, and Admin-panel) step by step
+with Helm commands, follow the [Kubernetes installation guide](https://docs.wproofreader.com/deployment/installation/kubernetes).
+To install the same stack with Argo CD or Flux, use the [WProofreader GitOps examples](https://github.com/WebSpellChecker/wproofreader-gitops).
+
 ## Install a published chart
 
 After the first release, the chart is available from the WebSpellChecker Helm repository.
