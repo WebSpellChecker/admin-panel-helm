@@ -62,7 +62,9 @@ Use your configured names if they differ.
 
 The chart does not install MySQL.
 Use a MySQL 8.4 server that you operate, a managed service such as Amazon RDS or Cloud SQL,
-or the [MySQL Operator for Kubernetes](https://dev.mysql.com/doc/mysql-operator/en/).
+the [MySQL Operator for Kubernetes](https://dev.mysql.com/doc/mysql-operator/en/),
+or the WebSpellChecker [mysql-server-helm](https://github.com/WebSpellChecker/mysql-server-helm) chart.
+The mysql-server-helm chart installs MySQL 9.4 by default, so set its `image.tag` value to `8.4`.
 Admin-panel and WProofreader can share one server or use separate ones.
 The server can run in any namespace or outside the cluster,
 as long as the Admin-panel Pods can reach it.
@@ -77,6 +79,11 @@ GRANT ALL PRIVILEGES ON admin_panel_db.* TO 'admin_panel'@'%';
 
 The user needs full rights on its database because the migration hook creates and alters tables.
 Its password becomes `DB_PASSWORD` in the next section.
+
+If you install MySQL with mysql-server-helm, you can skip these statements.
+Set its `auth.database` value to `admin_panel_db` and `auth.username` to `admin_panel`.
+MySQL then creates the database and the user with these rights on its first start.
+The user password is `auth.password`, or the `mysql-password` key of `auth.existingSecret`.
 
 Provision the WProofreader service database with `wproofreader-helm`.
 Do not create an empty database in its place.
@@ -108,18 +115,36 @@ kubectl -n wsc run wproofreader-license-check \
 
 ## 3. Create the Admin-panel Secret
 
-Generate a Laravel application key once.
+The Secret holds three values.
+Only `APP_KEY` is new.
+The two database passwords already exist, so use them again:
 
-> [!WARNING]
-> Keep the same key for the lifetime of this installation. Changing it invalidates
-> encrypted application data and sessions.
+| Key | Value |
+| --- | --- |
+| `APP_KEY` | A new key that you generate one time with the command below. |
+| `DB_PASSWORD` | The current password of the `admin_panel` user from [Prepare MySQL](#prepare-mysql). With mysql-server-helm, it is the `mysql-password` key of its Secret. |
+| `SERVICE_DB_PASSWORD` | The current password of the `app_service` user. In `wproofreader-helm`, it is `databaseProvisioning.adminPanelPassword`, or the `admin-panel-password` key of the Secret in `database.existingSecret`. |
+
+> [!IMPORTANT]
+> Do not generate new database passwords here.
+> MySQL already has these users, and Admin-panel must log in with their current passwords.
+> With a different value, the migration Job or the application fails with "Access denied".
+
+`APP_KEY` has no default value.
+Laravel uses it to encrypt application data and to sign the setup and invitation links,
+so each installation needs its own random key:
 
 ```bash
 printf 'base64:%s\n' "$(openssl rand -base64 32)"
 ```
 
-Copy the printed value and create the Secret.
-Replace all three placeholder values:
+> [!WARNING]
+> Generate the key only one time.
+> When you upgrade or reinstall Admin-panel, use the existing key again.
+> A new key invalidates encrypted application data, sessions, and the signed links.
+
+Create the Secret.
+Replace the three placeholders with the values from the table:
 
 ```bash
 kubectl -n wsc create secret generic admin-panel-secrets \
@@ -290,18 +315,26 @@ A new token invalidates all earlier tokens.
 After the first user exists, invite other users from the Team page.
 
 If the browser cannot open the setup page, create the administrator from the command line.
-The command asks for the name, email, and password:
+The command asks for the name and email:
 
 ```bash
 kubectl -n wsc exec --stdin --tty deployment/admin-panel-web -- \
   php artisan admin:create
 ```
 
-To run it without prompts, pass `--name` and `--email`.
-You can also pass `--password`.
-If you omit it, the command generates a strong password and prints it once.
+The command does not ask for a password.
+It generates a strong 20-character password and prints it one time.
+Save it in your password manager immediately, because the command cannot show it again.
+A generated password does not go into the shell history or the Kubernetes audit log,
+where a password typed on the command line can stay.
+
+If you already have a password for this administrator, pass it with `--password`.
+It must have at least 12 characters.
+To run the command without prompts, also pass `--name` and `--email`.
+
 This command works only before the first user exists.
 To reset a password later, run `php artisan user:reset-password <email>` in the web Pod.
+It also generates a new password and prints it one time.
 
 ## 9. If installation fails
 
