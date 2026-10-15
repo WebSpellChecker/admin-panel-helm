@@ -42,6 +42,9 @@ Each authorization check must print `yes`.
 
 ## 2. Prepare the dependencies
 
+If you do not have the dependencies yet, the [Kubernetes installation guide](https://docs.wproofreader.com/deployment/installation/kubernetes)
+installs MySQL, WProofreader Server, and Admin-panel step by step.
+
 Admin-panel needs three external components:
 
 1. A MySQL database for Admin-panel.
