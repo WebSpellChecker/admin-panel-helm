@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2](https://github.com/WebSpellChecker/admin-panel-helm/compare/v1.1.1...v1.1.2) - 2026-10-22
+
+### Bug fixes
+
+* update Admin-panel to 3.1.2 (#21) ([7a7aeff](https://github.com/WebSpellChecker/admin-panel-helm/commit/7a7aeff62b8ff581aeafc8d9cb06e319e6422415))
+
 ## [1.1.1](https://github.com/WebSpellChecker/admin-panel-helm/compare/v1.1.0...v1.1.1) - 2026-10-13
 
 ### Bug fixes
