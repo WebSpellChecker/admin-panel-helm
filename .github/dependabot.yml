@@ -2,6 +2,8 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    # Pull requests go to development; only the release pull request goes to main.
+    target-branch: development
     schedule:
       interval: monthly
     groups:
