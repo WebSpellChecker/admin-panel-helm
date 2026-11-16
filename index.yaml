@@ -4,6 +4,30 @@ entries:
   - annotations:
       artifacthub.io/license: MIT
     apiVersion: v2
+    appVersion: 3.3.1
+    created: "2026-11-16T12:06:48.400379605Z"
+    description: A Helm chart for deploying WProofreader Admin-panel on Kubernetes
+    digest: 71a6017194b015462b86d529a2312de059146f766d165de1baa26131bc031899
+    home: https://wproofreader.com/
+    keywords:
+    - wproofreader
+    - admin-panel
+    - laravel
+    - php
+    kubeVersion: '>=1.27.0-0'
+    maintainers:
+    - email: support@webspellchecker.net
+      name: Infrastructure Team
+    name: admin-panel
+    sources:
+    - https://github.com/WebSpellChecker/admin-panel-helm
+    type: application
+    urls:
+    - https://github.com/WebSpellChecker/admin-panel-helm/releases/download/v1.3.1/admin-panel-1.3.1.tgz
+    version: 1.3.1
+  - annotations:
+      artifacthub.io/license: MIT
+    apiVersion: v2
     appVersion: 3.3.0
     created: "2026-11-13T12:15:49.452646679Z"
     description: A Helm chart for deploying WProofreader Admin-panel on Kubernetes
@@ -160,4 +184,4 @@ entries:
     urls:
     - https://github.com/WebSpellChecker/admin-panel-helm/releases/download/v1.0.0/admin-panel-1.0.0.tgz
     version: 1.0.0
-generated: "2026-11-13T12:15:49.451362823Z"
+generated: "2026-11-16T12:06:48.398446089Z"
